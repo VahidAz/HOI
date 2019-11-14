@@ -1,0 +1,19 @@
+ubunut 18.04.3
+python3.7.5
+anaconda-2010-10 or less ham dare kar mikone 2010
+
+nvidia driver 390.129 without binary cuda or 396.54, albate mohem nist version balater chon backward compatibility dare
+cuda9.2(runtime file) or cuda 9.1, install az runfile
+
+conda install pytorch=0.4.1 cuda92 -c pytorch
+conda install torchvision
+
+gcc/g++ 7.4.0
+
+make packages in model folder(sh make.sh)
+albate un make.sh kolli ham okay hast va behtar
+
+
+conda create python=3.7.5
+conda ctivate vahid1
+

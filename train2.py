@@ -17,25 +17,25 @@ from torch import nn
 
 from torchvision.models import vgg16
 
-from cfg.config import cfg
+from configs.config import cfg
 from data.dataset_imgnvid import Dataset
-from model.rpn.rpnn import _RPNN
+from models.rpn.rpnn import _RPNN
 
 import torch.optim as optim
-from model.utils.net_utils import adjust_learning_rate, clip_gradient,  save_checkpoint
+from models.libs.utils.net_utils import adjust_learning_rate, clip_gradient,  save_checkpoint
 
 import time
 import os
 
-from model.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
-from model.roi_align.modules.roi_align import RoIAlignAvg
+from models.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
+from models.libs.roi_align.modules.roi_align import RoIAlignAvg
 
 from torch.autograd import Variable
-from cdist import fast_cdist, my_cdist
+from models.libs.utils.cdist import fast_cdist, my_cdist
 
-from model.rpn.bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
+from models.rpn.bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
 import torch.nn.functional as F
-from model.utils.net_utils import _smooth_l1_loss
+from models.libs.utils.net_utils import _smooth_l1_loss
 
 
 def train(**kwargs):

@@ -64,7 +64,7 @@ class Config(object):
         if self.backend_model == 'vgg16' and self.pretrained_flag:
             # Load caffe pretrained vgg16 since it has better performance
             if self.pretrained_caffe_flag:
-                self.pretrained_weight_path = './pretrained_model/vgg16_caffe.pth'
+                self.pretrained_weight_path = './pretrained_models/vgg16_caffe.pth'
             else:
                 self.pretrained_weight_path = None
 

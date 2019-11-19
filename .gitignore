@@ -1,0 +1,44 @@
+## FOLDERS
+datasets/*
+pretrained_models/*
+checkpoints/*
+logs/*
+
+
+## GENERAL
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.cuo
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Compiled protocol buffers
+*.pb.h
+*.pb.cc
+*_pb2.py
+
+# Compiled python
+*.pyc
+*.pyd
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+
+# Cython generated files
+models/libs/utils/bbox.c
+

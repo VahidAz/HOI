@@ -8,3 +8,4 @@ nvcc -c -o roi_crop_cuda_kernel.cu.o roi_crop_cuda_kernel.cu -x cu -Xcompiler -f
 
 cd ../
 python build.py
+

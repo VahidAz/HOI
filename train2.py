@@ -31,6 +31,11 @@ from model.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
 from model.roi_align.modules.roi_align import RoIAlignAvg
 
 from torch.autograd import Variable
+from cdist import fast_cdist, my_cdist
+
+from model.rpn.bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
+import torch.nn.functional as F
+from model.utils.net_utils import _smooth_l1_loss
 
 
 def train(**kwargs):
@@ -41,6 +46,7 @@ def train(**kwargs):
 
     # Backend model
     feat_extractor = None
+    classifier = None
 
     if cfg.backend_model == 'vgg16':
         vgg16_model = vgg16()
@@ -56,7 +62,10 @@ def train(**kwargs):
             # not using the last maxpool layer
             feat_extractor = nn.Sequential(*list(vgg16_model.features._modules.values())[:-1])
 
-            # pdb.set_trace()
+            classifier = nn.Sequential(*list(vgg16_model.classifier._modules.values())[:-1])
+
+            print('\n VGGGGGGGGGGGG \n')
+            pdb.set_trace()
             
             # Freeze top4 conv
             for layer in range(10):
@@ -64,6 +73,7 @@ def train(**kwargs):
 
     if cfg.cuda:
         feat_extractor = feat_extractor.cuda()
+        classifier = classifier.cuda()
 
     # Train dataset loader
     train_dataset = Dataset(cfg)
@@ -107,6 +117,8 @@ def train(**kwargs):
     # print('\nHH : ', len(train_dataloader))
     # pdb.set_trace()
     # counter = 0
+
+    RCNN_cls_score = nn.Linear(4096, 30).cuda()
 
     session = 1
     POOLING_SIZE = 7
@@ -186,10 +198,65 @@ def train(**kwargs):
 
             pooled_feat = roi_align_here(base_feat, rois.view(-1, 5))
 
+            pool5_flat = pooled_feat.view(pooled_feat.size(0), -1)
+            pooled_feat = classifier(pool5_flat)
+
+            pooled_feat2 = pooled_feat.view(5, 128, pooled_feat.shape[1])
+            # pooled_feat2 = pooled_feat.view(rois.shape[0], 
+            #     rois.shape[1], pooled_feat.shape[1], 
+            #     pooled_feat.shape[2], pooled_feat.shape[3])
+
+
+            tmpp = torch.zeros([4, 128], dtype=torch.float32)
+            tmpp1 = torch.zeros([4, 128], dtype=torch.int32)
+
+            for ll in range(rois.shape[0] - 1):
+                print('\n KHAR TULE INSIDE LOOP \n')
+                print('Index: ', ll)
+
+                first_feat = pooled_feat2[ll]
+                sec_feat = pooled_feat2[ll+1]
+
+                first_rois = rois[ll]
+                sec_rois = rois[ll+1]
+
+                first_rois = first_rois.view(1, first_rois.shape[0], first_rois.shape[1])
+                sec_rois = sec_rois[:, :4]
+
+                # pdb.set_trace()
+
+                # print('\n KHAR TU:LE')
+                cdist_res = fast_cdist(first_feat, sec_feat)
+                overlaps_res = bbox_overlaps_batch(sec_rois, first_rois)
+                overlaps_res = overlaps_res.view(overlaps_res.shape[1], overlaps_res.shape[2])
+
+
+                mul_res = cdist_res * overlaps_res
+
+                val, indices = torch.max(mul_res, 0)
+
+                print('\n LL: ', ll)
+                print(val)
+                print(indices)
+
+                print(cdist_res)
+                print(overlaps_res)
+
+                tmpp[ll][:] = val
+                tmpp1[ll][:] = indices
 
 
 
+                # pdb.set_trace()
+                
+                # cdist_res1 = my_cdist(first_feat, sec_feat)
 
+                # ctmp  = cdist_res.argmin(0)
+
+                # tmpp[ll][:] = ctmp
+
+
+                # pdb.set_trace()
 
             # print('\n===============\n')
             # print('ii: ', ii)
@@ -197,8 +264,61 @@ def train(**kwargs):
             # print(cur_rpn_loss_cls)
             # print(cur_rpn_loss_box)
 
+            # for ll in range(rois.shape[0] - 1):
+            #     l
+
+            final_feat = torch.zeros([pooled_feat2.shape[1], pooled_feat2.shape[2]], dtype=torch.float32)
+            final_lbl = torch.zeros([pooled_feat2.shape[1], pooled_feat2.shape[2]], dtype=torch.float32)
+            countt = 0
+
+            for nnc in range(rois.shape[1]):
+                f0 = tmpp[0][nnc]
+                f0_ind = tmpp1[0][nnc]
+
+                f1 = tmpp[1][nnc]
+                f1_ind = tmpp1[1][nnc]
+
+                f2 = tmpp[2][nnc]
+                f2_ind = tmpp1[2][nnc]
+
+                f3 = tmpp[3][nnc]
+                f3_ind = tmpp1[3][nnc]
+
+                # # tmp_feat = 0
+                # if f0 > 0.2 and f1 > 0.2 and f2 > 0.2 and f3 > 0.2:
+                tmp_feat = ((pooled_feat2[0][nnc] +
+                    pooled_feat2[1][nnc] +
+                    pooled_feat2[2][nnc] +
+                    pooled_feat2[3][nnc] +
+                    pooled_feat2[4][nnc]) / 5.0)
+
+                final_feat[nnc] = tmp_feat
+                final_lbl[nnc] = 0
+                countt += 1
+
+
+            final_feat = final_feat[:countt][:]
+            final_feat = final_feat.cuda()
+
+
+            # compute object classification probability
+            cls_score = RCNN_cls_score(final_feat)
+            cls_prob = F.softmax(cls_score, 1)
+
             print('\nANNNNNNNNN\n')
             pdb.set_trace()
+
+            RCNN_loss_cls = F.cross_entropy(cls_score, rois_label[:128])
+
+            print('\nO)O)O)o0o0o0o0o0\n')
+            pdb.set_trace()
+
+            # bounding box regression L1 loss
+            RCNN_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
+
+            print('\nGGGGGGGG\n')
+            pdb.set_trace()
+
 
             loss = cur_rpn_loss_cls.mean() + cur_rpn_loss_box.mean()
             loss_temp += loss.item()

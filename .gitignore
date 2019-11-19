@@ -3,6 +3,7 @@ datasets/*
 pretrained_models/*
 checkpoints/*
 logs/*
+tmps/*
 
 
 ## GENERAL

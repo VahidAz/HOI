@@ -57,14 +57,13 @@ def preprocess(_img, _min_size=600, _max_size=1000,
     # TODO: Crop the image if w >> h or h >> w
 
     C, H, W = _img.shape
+    img = _img / 255.
 
     scale = _min_size / float(min(H, W))
-    img = _img / 255.
+    if np.round(scale * max(H, W)) > _max_size:
+        scale = _max_size / float(max(H, W))
     
     img = sktsf.resize(img, (C, H * scale, W * scale), anti_aliasing=False)
-
-    # We don't check for long side, since in VOC
-    # It is always less than our max size
 
     if _pretrained:
         if _pretrained_caffe:

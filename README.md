@@ -16,8 +16,4 @@ conda install pytorch=0.4.1 cuda91 -c pytorch
 
 conda install torchvision
 
-Make packages inside m
-
-make packages in model folder(sh make.sh)
-
-albate un make.sh kolli ham okay hast va behtar
+Make packages in models folder(sh make.sh)

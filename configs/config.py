@@ -48,6 +48,9 @@ class Config(object):
     # Whether to have weight decay on bias as well
     BIAS_DECAY = False
 
+    # Whether to initialize the weights with truncated normal distribution
+    TRAIN_TRUNCATED = False
+
     # Make tensorboard logs
     use_tfboard = True
 

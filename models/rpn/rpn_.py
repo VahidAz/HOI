@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+import numpy as np
+import math
+import pdb
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,42 +15,37 @@ from .proposal_layer import _ProposalLayer
 from .anchor_target_layer import _AnchorTargetLayer
 from models.libs.utils.net_utils import _smooth_l1_loss
 
-import numpy as np
-import math
-import pdb
-import time
 
-class RPNN_nn.Module):
-    """ region proposal network """
-    def __init__(self, din=512, feat_extractor=None):
-        super(_RPNN, self).__init__()
+class RPN_(nn.Module):
+    def __init__(self, _cfg, _din=512):
+        super(RPN_, self).__init__()
         
-        self.din = din  # get depth of input feature map, e.g., 512
-        self.anchor_scales = cfg.anchor_scales
-        self.anchor_ratios = cfg.anchor_scales
-        self.feat_stride = 16 #cfg.FEAT_STRIDE[0]
+        self.cfg = _cfg
+        self.din = _din  # Get depth of input feature map, e.g., 512
+        self.anchor_scales = self.cfg.anchor_scales
+        self.anchor_ratios = self.cfg.anchor_scales
+        self.feat_stride = 16
 
-        self.feature_extractor = feat_extractor
+        self.rpn_loss_cls = 0
+        self.rpn_loss_box = 0
 
-        # define the convrelu layers processing input feature map
+        # Define the convrelu layers processing input feature map
         self.RPN_Conv = nn.Conv2d(self.din, 512, 3, 1, 1, bias=True).cuda()
 
-        # define bg/fg classifcation score layer
+        # Define bg/fg classifcation score layer
         self.nc_score_out = len(self.anchor_scales) * len(self.anchor_ratios) * 2 # 2(bg/fg) * 9 (anchors)
         self.RPN_cls_score = nn.Conv2d(512, self.nc_score_out, 1, 1, 0).cuda()
 
-        # define anchor box offset prediction layer
+        # Define anchor box offset prediction layer
         self.nc_bbox_out = len(self.anchor_scales) * len(self.anchor_ratios) * 4 # 4(coords) * 9 (anchors)
         self.RPN_bbox_pred = nn.Conv2d(512, self.nc_bbox_out, 1, 1, 0).cuda()
 
-        # define proposal layer
+        # Define proposal layer
         self.RPN_proposal = _ProposalLayer(self.feat_stride, self.anchor_scales, self.anchor_ratios)
 
-        # define anchor target layer
+        # Define anchor target layer
         self.RPN_anchor_target = _AnchorTargetLayer(self.feat_stride, self.anchor_scales, self.anchor_ratios)
 
-        # self.rpn_loss_cls = 0
-        # self.rpn_loss_box = 0
 
     @staticmethod
     def reshape(x, d):
@@ -58,18 +58,22 @@ class RPNN_nn.Module):
         )
         return x
 
-    # def forward(self, base_feat, im_info, gt_boxes, num_boxes):
+
+    # Def forward(self, base_feat, im_info, gt_boxes, num_boxes):
     def forward(self, img, im_info, gt_boxes, num_boxes):
 
         batch_size = img.size(0)
-        import pdb
-        # pdb.set_trace()
 
-        base_feat = self.feature_extractor(img)
+        im_info = im_info.data
+        gt_boxes = gt_boxes.data
+        num_boxes = num_boxes.data
 
-        # return feature map after convrelu layer
+        # Feed image data to base model to obtain base feature map
+        base_feat = self.RPN__base(img)
+
+        # Return feature map after convrelu layer
         rpn_conv1 = F.relu(self.RPN_Conv(base_feat), inplace=True)
-        # get rpn classification score
+        # Get rpn classification score
         rpn_cls_score = self.RPN_cls_score(rpn_conv1)
 
         rpn_cls_score_reshape = self.reshape(rpn_cls_score, 2)
@@ -85,21 +89,14 @@ class RPNN_nn.Module):
         rois = self.RPN_proposal((rpn_cls_prob.data, rpn_bbox_pred.data,
                                  im_info, cfg_key))
 
-        # self.rpn_loss_cls = 0
-        # self.rpn_loss_box = 0
-
-        # generating training labels and build the rpn loss
+        # Generating training labels and build the rpn loss
         # if self.training:
         if True:
             assert gt_boxes is not None
 
             rpn_data = self.RPN_anchor_target((rpn_cls_score.data, gt_boxes, im_info, num_boxes))
 
-            import pdb
-            # print('\nAKKKKKKKKKKKKKKKKKKKKKKKKKKKK\n')
-            # pdb.set_trace()
-
-            # compute classification loss
+            # Compute classification loss
             rpn_cls_score = rpn_cls_score_reshape.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 2)
             rpn_label = rpn_data[0].view(batch_size, -1)
 
@@ -114,7 +111,7 @@ class RPNN_nn.Module):
 
             rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = rpn_data[1:]
 
-            # compute bbox regression loss
+            # Compute bbox regression loss
             rpn_bbox_inside_weights = Variable(rpn_bbox_inside_weights)
             rpn_bbox_outside_weights = Variable(rpn_bbox_outside_weights)
             rpn_bbox_targets = Variable(rpn_bbox_targets)
@@ -123,3 +120,25 @@ class RPNN_nn.Module):
                                                             rpn_bbox_outside_weights, sigma=3, dim=[1,2,3])
 
         return rois, self.rpn_loss_cls, self.rpn_loss_box, base_feat
+
+
+     def _init_weights(self):
+        def normal_init(m, mean, stddev, truncated=False):
+            """
+            weight initalizer: truncated normal and random normal.
+            """
+            # x is a parameter
+            if truncated:
+                m.weight.data.normal_().fmod_(2).mul_(stddev).add_(mean) # not a perfect approximation
+            else:
+                m.weight.data.normal_(mean, stddev)
+                m.bias.data.zero_()
+
+        normal_init(self.RPN_Conv, 0, 0.01, self.cfg.TRAIN_TRUNCATED)
+        normal_init(self.RPN_cls_score, 0, 0.01, self.cfg.TRAIN_TRUNCATED)
+        normal_init(self.RPN_bbox_pred, 0, 0.01, self.cfg.TRAIN_TRUNCATED)
+
+
+    def create_architecture(self):
+        self._init_modules()
+        self._init_weights()

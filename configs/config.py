@@ -7,6 +7,9 @@
 from pprint import pprint
 
 
+### TODO: soem of the pathes are hardcoded, they should move here
+
+
 class Config(object):
     # Dataset configs
     dataset_name = 'pascal_voc2012'

@@ -1,5 +1,6 @@
 # HOI
 
+#### Configs
 * Ubuntu 18.04.3
 * python 3.7.5
 * gcc 7.4.0
@@ -14,6 +15,6 @@
 * mkdir pretrained_models
 
 #### Refrence repos
-https://github.com/ruotianluo/pytorch-faster-rcnn
-https://github.com/jwyang/faster-rcnn.pytorch
-https://github.com/chenyuntc/simple-faster-rcnn-pytorch
+* https://github.com/ruotianluo/pytorch-faster-rcnn
+* https://github.com/jwyang/faster-rcnn.pytorch
+* https://github.com/chenyuntc/simple-faster-rcnn-pytorch

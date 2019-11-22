@@ -5,7 +5,7 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 import torch
-from models.libs.utils.config import cfg
+from configs.config import cfg
 if torch.cuda.is_available():
     from models.libs.nms.nms_gpu import nms_gpu
 from models.libs.nms.nms_cpu import nms_cpu

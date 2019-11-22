@@ -133,9 +133,12 @@ class Dataset:
         tmp_im_info[0][0] = o_H
         tmp_im_info[0][1] = o_W
         tmp_im_info[0][2] = scale
+        tmp_im_info = tmp_im_info.reshape(-1, 3)
+
+        bbox_num_np = np.asarray([bbox.shape[0]])
 
         return img.copy(), bbox.copy(), label.copy(), \
-            tmp_im_info.copy(), bbox.shape[0]
+            tmp_im_info.copy(), bbox_num_np.copy()
 
 
     def __len__(self):

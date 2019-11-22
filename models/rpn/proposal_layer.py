@@ -14,7 +14,7 @@ import torch.nn as nn
 import numpy as np
 import math
 import yaml
-from models.libs.utils.config import cfg
+from configs.config import cfg
 from .generate_anchors import generate_anchors
 from .bbox_transform import bbox_transform_inv, clip_boxes, clip_boxes_batch
 from models.libs.nms.nms_wrapper import nms
@@ -69,10 +69,11 @@ class _ProposalLayer(nn.Module):
         im_info = input[2]
         cfg_key = input[3]
 
-        pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N
-        post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N
-        nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH
-        min_size      = cfg[cfg_key].RPN_MIN_SIZE
+        if cfg_key == 'TRAIN':  
+            pre_nms_topN  = cfg.TRAIN_RPN_PRE_NMS_TOP_N
+            post_nms_topN = cfg.TRAIN_RPN_POST_NMS_TOP_N
+            nms_thresh    = cfg.TRAIN_RPN_NMS_THRESH
+            min_size      = cfg.TRAIN_RPN_MIN_SIZE
 
         batch_size = bbox_deltas.size(0)
 

@@ -23,22 +23,23 @@ class RPN_(nn.Module):
         self.cfg = _cfg
         self.din = _din  # Get depth of input feature map, e.g., 512
         self.anchor_scales = self.cfg.anchor_scales
-        self.anchor_ratios = self.cfg.anchor_scales
+        self.anchor_ratios = self.cfg.anchor_ratios
         self.feat_stride = 16
 
+        # Loss
         self.rpn_loss_cls = 0
         self.rpn_loss_box = 0
 
         # Define the convrelu layers processing input feature map
-        self.RPN_Conv = nn.Conv2d(self.din, 512, 3, 1, 1, bias=True).cuda()
+        self.RPN_Conv = nn.Conv2d(self.din, 512, 3, 1, 1, bias=True)
 
         # Define bg/fg classifcation score layer
         self.nc_score_out = len(self.anchor_scales) * len(self.anchor_ratios) * 2 # 2(bg/fg) * 9 (anchors)
-        self.RPN_cls_score = nn.Conv2d(512, self.nc_score_out, 1, 1, 0).cuda()
+        self.RPN_cls_score = nn.Conv2d(512, self.nc_score_out, 1, 1, 0)
 
         # Define anchor box offset prediction layer
         self.nc_bbox_out = len(self.anchor_scales) * len(self.anchor_ratios) * 4 # 4(coords) * 9 (anchors)
-        self.RPN_bbox_pred = nn.Conv2d(512, self.nc_bbox_out, 1, 1, 0).cuda()
+        self.RPN_bbox_pred = nn.Conv2d(512, self.nc_bbox_out, 1, 1, 0)
 
         # Define proposal layer
         self.RPN_proposal = _ProposalLayer(self.feat_stride, self.anchor_scales, self.anchor_ratios)
@@ -94,6 +95,9 @@ class RPN_(nn.Module):
         if True:
             assert gt_boxes is not None
 
+            self.rpn_loss_cls = 0
+            self.rpn_loss_box = 0
+
             rpn_data = self.RPN_anchor_target((rpn_cls_score.data, gt_boxes, im_info, num_boxes))
 
             # Compute classification loss
@@ -122,7 +126,7 @@ class RPN_(nn.Module):
         return rois, self.rpn_loss_cls, self.rpn_loss_box, base_feat
 
 
-     def _init_weights(self):
+    def _init_weights(self):
         def normal_init(m, mean, stddev, truncated=False):
             """
             weight initalizer: truncated normal and random normal.

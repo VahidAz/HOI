@@ -22,7 +22,7 @@ class RPN_VGG16(RPN_):
     # TODO, check the possibility of adding class agnostic
 
 
-    RPN_.__init__(self, din=self.dout_base_model)
+    RPN_.__init__(self, _cfg=_cfg, _din=self.dout_base_model)
 
 
   def _init_modules(self):
@@ -30,11 +30,11 @@ class RPN_VGG16(RPN_):
     # TODO: Already just caffe pretrained is supported
     # pytorch vgg16 will be added later
 
-    vgg = models.vgg16()
+    vgg = models.vgg16().cuda()
 
     if self.cfg.pretrained:
         if self.cfg.pretrained_caffe:
-            print("Loading cafffe pretrained weights from %s" %(
+            print("Loading caffe pretrained weights from %s" %(
                 self.cfg.pretrained_path))
             state_dict = torch.load(self.cfg.pretrained_path)
             vgg.load_state_dict(

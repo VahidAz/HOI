@@ -12,7 +12,9 @@ import cv2 as cv
 
 from configs.config import cfg
 from data.voc_dataset import Dataset, inverse_normalize
-from models.libs.utils import array_tool as at 
+from models.libs.utils import array_tool as at
+
+from models.rpn.rpn_ import RPN_
 
 
 def train(**kwargs):

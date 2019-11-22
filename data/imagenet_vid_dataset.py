@@ -33,9 +33,8 @@ def caffe_normalize(_img):
     return img
 
 
-def inverse_normalize(_img, _cfg=None):
-    # if pretrained_caffe:
-    if True:
+def inverse_normalize(_img, _caffe=True):
+    if _caffe:
         img = _img + (
             np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1))
         # return img[::-1, :, :]
@@ -121,9 +120,10 @@ class Dataset:
         self.cfg = _cfg
         self.db = IMGNETVIDPARSER(
             _data_dir=self.cfg.imgnet_vid_dataset_train, 
-            _split='train', _time_win= self.cfg.time_win, _class_num=30)
+            _split='train', _time_win=self.cfg.time_win, _class_num=30)
         self.tsf = Transform(self.cfg.min_size, self.cfg.max_size, 
             self.cfg.pretrained, self.cfg.pretrained_caffe)
+
 
     def __getitem__(self, _idx):
         ori_img, bbox, label, occluded, corrupted = self.db.get_example(_idx)
@@ -162,6 +162,7 @@ class Dataset:
 
         else:
             # To address toch issue for squzee
+            # Retrun dummy values
             return np.asarray(final_corrupted).copy(), \
                 np.asarray(final_corrupted).copy(), \
                 np.asarray(final_corrupted).copy(), \

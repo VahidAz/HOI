@@ -48,11 +48,11 @@ def train(**kwargs):
             print(num_bbox.shape)
             print(corrupted.shape)
 
-            print(bbox[0])
-            print(lbls[0])
-            print(im_info[0])
-            print(num_bbox[0])
-            print(corrupted[0])
+            # print(bbox[0])
+            # print(lbls[0])
+            # print(im_info[0])
+            # print(num_bbox[0])
+            # print(corrupted[0])
 
             for idx, (img_, bbox_) in enumerate(zip(img[0], bbox[0])):
                 img_ = at.tonumpy(img_)
@@ -63,9 +63,10 @@ def train(**kwargs):
                     cv.rectangle(img_, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])), (0, 0, 255), 3)
 
                 cv.imwrite('img_in_train_loop_' + str(idx) + '.jpg', img_)
+
             # exit(0)
 
-            # pdb.set_trace()
+            pdb.set_trace()
             # pass
 
 

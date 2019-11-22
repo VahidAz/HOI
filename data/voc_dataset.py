@@ -33,9 +33,8 @@ def caffe_normalize(_img):
     return img
 
 
-def inverse_normalize(_img, _cfg=None):
-    # if pretrained_caffe:
-    if True:
+def inverse_normalize(_img, _caffe=True):
+    if _caffe:
         img = _img + (
             np.array([122.7717, 115.9465, 102.9801]).reshape(3, 1, 1))
         # return img[::-1, :, :]
@@ -72,15 +71,15 @@ def preprocess(_img, _min_size=600, _max_size=1000,
         normalize = pytorch_normalze
 
     ###<<< DEBUG
-    # print('\nGet example in voc preprocess>>>')
-    # print(img.shape)
-    # # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
-    # img_ = img.transpose((1, 2, 0))
-    # img_ = img_[...,::-1].copy()
-    # img_ = img_ * 255
-    # img_ = img_.astype(np.uint8, copy=False)
+    print('\nGet example in voc preprocess>>>')
+    print(img.shape)
+    # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
+    img_ = img.transpose((1, 2, 0))
+    img_ = img_[...,::-1].copy()
+    img_ = img_ * 255
+    img_ = img_.astype(np.uint8, copy=False)
 
-    # cv.imwrite('ge_voc_preprocess.jpg', img_)
+    cv.imwrite('ge_voc_preprocess.jpg', img_)
     ###>>>
 
     return normalize(img), scale
@@ -133,7 +132,6 @@ class Dataset:
         tmp_im_info[0][0] = o_H
         tmp_im_info[0][1] = o_W
         tmp_im_info[0][2] = scale
-        tmp_im_info = tmp_im_info.reshape(-1, 3)
 
         bbox_num_np = np.asarray([bbox.shape[0]])
 

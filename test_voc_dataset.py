@@ -37,6 +37,8 @@ def train(**kwargs):
         for step, (img, bbox, lbls, 
             im_info, num_bbox) in tqdm(enumerate(train_dataloader)):
 
+            # im_info = im_info.view(-1, 3)
+
             img = at.tonumpy(img[0])
             img = inverse_normalize(img).copy()
 

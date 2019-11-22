@@ -18,3 +18,5 @@
 * https://github.com/ruotianluo/pytorch-faster-rcnn
 * https://github.com/jwyang/faster-rcnn.pytorch
 * https://github.com/chenyuntc/simple-faster-rcnn-pytorch
+
+#### TODO, explain other requirements later

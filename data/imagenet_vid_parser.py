@@ -166,16 +166,16 @@ class IMGNETVIDPARSER:
         occluded_np = np.array(occluded_list, dtype=np.bool).astype(np.uint8)
 
         ###<<< DEBUG
-        for ind, img_ in enumerate(img_list):
-            print('\nGet example in voc parser>>>')
-            print(id_)
-            print(img_.shape)
-            # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
-            img_ = img_.transpose((1, 2, 0))
-            img_ = img_[...,::-1].copy()
-            img_ = img_.astype(np.uint8, copy=False)
+        # for ind, img_ in enumerate(img_list):
+        #     print('\nGet example in imgnetvid parser>>>')
+        #     print(id_)
+        #     print(img_.shape)
+        #     # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
+        #     img_ = img_.transpose((1, 2, 0))
+        #     img_ = img_[...,::-1].copy()
+        #     img_ = img_.astype(np.uint8, copy=False)
             
-            cv.imwrite('ge_voc_parser_' + str(ind) + '.jpg', img_)
+        #     cv.imwrite('ge_voc_parser_' + str(ind) + '.jpg', img_)
         ###>>>
 
         return img_np, bbox_np, label_np, occluded_np, corrupted

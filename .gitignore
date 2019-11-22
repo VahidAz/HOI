@@ -4,6 +4,7 @@ pretrained_models/*
 checkpoints/*
 logs/*
 tmps/*
+_ext/*
 
 
 ## GENERAL

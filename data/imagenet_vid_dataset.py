@@ -108,10 +108,10 @@ class Transform(object):
         bbox = util.resize_bbox(bbox, (H, W), (o_H, o_W), scale)
 
         # Horizontally flip
-        img, params = util.random_flip(img, x_random=True, 
-            return_param=True)
-        bbox = util.flip_bbox(bbox, (o_H, o_W), 
-            x_flip=params['x_flip'])
+        # img, params = util.random_flip(img, x_random=False, 
+        #     return_param=True)
+        # bbox = util.flip_bbox(bbox, (o_H, o_W), 
+        #     x_flip=params['x_flip'])
 
         return img, bbox, label, o_H, o_W, scale
 
@@ -150,7 +150,7 @@ class Dataset:
                 final_img.append(img)
                 final_bbox.append(bbox)
                 final_label.append(label)
-                final_bbox_num.append(bbox.shape[0])
+                final_bbox_num.append([bbox.shape[0]])
                 final_im_info.append(tmp_im_info)
 
             return np.asarray(final_img).copy(), \

@@ -12,3 +12,8 @@
 * mkdir checkpoints
 * mkdir datasets
 * mkdir pretrained_models
+
+#### Refrence repos
+https://github.com/ruotianluo/pytorch-faster-rcnn
+https://github.com/jwyang/faster-rcnn.pytorch
+https://github.com/chenyuntc/simple-faster-rcnn-pytorch

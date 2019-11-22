@@ -30,6 +30,7 @@ def train(**kwargs):
         train_dataset, batch_size=1, shuffle=True, num_workers=1)
     
     print('Len Train Data: ', len(train_dataloader))
+    print('Num classes: ', train_dataset.num_classes())
 
     for epoch in range(1):
         for step, (img, bbox, lbls, 

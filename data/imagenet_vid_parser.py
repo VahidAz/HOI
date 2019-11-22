@@ -85,6 +85,10 @@ class IMGNETVIDPARSER:
         return len(self.ids)
 
 
+    def num_classes(self):
+        return len(self.label_names)
+
+
     def get_example(self, _idx):
         id_ = self.ids[_idx]
 

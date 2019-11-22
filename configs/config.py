@@ -12,15 +12,19 @@ from pprint import pprint
 
 class Config(object):
     # Dataset configs
-    dataset_name = 'pascal_voc2012'
-    dataset_trainval = None
-    dataset_test = None
+    voc_dataset_name = 'pascal_voc2012'
+    voc_dataset_trainval = None
+    voc_dataset_test = None
+
+    imgnet_vid_dataset_train = './datasets/ILSVRC2015/'
 
     # Dataset properties
     min_size = None
     max_size = None
     anchor_scales = None
     anchor_ratios = None
+
+    time_win = 5
 
     # Backend model
     backend_model = 'vgg16'
@@ -33,6 +37,7 @@ class Config(object):
 
     # Training configs
     epoch = 2
+    batch_size = 1
 
     # Weight decay, for regularization
     WEIGHT_DECAY = 0.0005
@@ -55,10 +60,10 @@ class Config(object):
             setattr(self, k, v)
 
         # VOC_2012
-        if self.dataset_name == 'pascal_voc2012':
-            self.dataset_trainval = (
+        if self.voc_dataset_name == 'pascal_voc2012':
+            self.voc_dataset_trainval = (
                 './datasets/PASCAL_VOC/VOC2012/VOC2012_trainval/')
-            self.dataset_test = './datasets/PASCAL_VOC/VOC2012/VOC2012_test/'
+            self.voc_dataset_test = './datasets/PASCAL_VOC/VOC2012/VOC2012_test/'
             self.min_size = 600
             self.max_size = 1000
             self.anchor_scales = [8, 16, 32]

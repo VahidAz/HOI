@@ -120,8 +120,8 @@ class Dataset:
     def __init__(self, _cfg):
         self.cfg = _cfg
         self.db = IMGNETVIDPARSER(
-            _data_dir='./datasets/ILSVRC2015/', 
-            _split='train', _class_num=30)
+            _data_dir=self.cfg.imgnet_vid_dataset_train, 
+            _split='train', _time_win= self.cfg.time_win, _class_num=30)
         self.tsf = Transform(self.cfg.min_size, self.cfg.max_size, 
             self.cfg.pretrained, self.cfg.pretrained_caffe)
 
@@ -172,3 +172,7 @@ class Dataset:
 
     def __len__(self):
         return len(self.db)
+
+
+    def num_classes(self):
+        return self.db.num_classes()

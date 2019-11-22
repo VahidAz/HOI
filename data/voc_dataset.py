@@ -119,7 +119,7 @@ class Transform(object):
 class Dataset:
     def __init__(self, _cfg):
         self.cfg = _cfg
-        self.db = VOCPARSER(self.cfg.dataset_trainval)
+        self.db = VOCPARSER(self.cfg.voc_dataset_trainval)
         self.tsf = Transform(self.cfg.min_size, self.cfg.max_size, 
             self.cfg.pretrained, self.cfg.pretrained_caffe)
 
@@ -140,3 +140,7 @@ class Dataset:
 
     def __len__(self):
         return len(self.db)
+
+
+    def num_classes(self):
+        return self.db.num_classes()

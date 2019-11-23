@@ -71,15 +71,15 @@ def preprocess(_img, _min_size=600, _max_size=1000,
         normalize = pytorch_normalze
 
     ###<<< DEBUG
-    print('\nGet example in voc preprocess>>>')
-    print(img.shape)
-    # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
-    img_ = img.transpose((1, 2, 0))
-    img_ = img_[...,::-1].copy()
-    img_ = img_ * 255
-    img_ = img_.astype(np.uint8, copy=False)
+    # print('\nGet example in voc preprocess>>>')
+    # print(img.shape)
+    # # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
+    # img_ = img.transpose((1, 2, 0))
+    # img_ = img_[...,::-1].copy()
+    # img_ = img_ * 255
+    # img_ = img_.astype(np.uint8, copy=False)
 
-    cv.imwrite('ge_voc_preprocess.jpg', img_)
+    # cv.imwrite('ge_voc_preprocess.jpg', img_)
     ###>>>
 
     return normalize(img), scale

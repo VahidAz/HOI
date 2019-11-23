@@ -65,15 +65,15 @@ class VOCPARSER:
         img = read_image(img_file, color=True)
 
         ###<<< DEBUG
-        print('\nGet example in voc parser>>>')
-        print(id_)
-        print(img.shape)
-        # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
-        img_ = img.transpose((1, 2, 0))
-        img_ = img_[...,::-1].copy()
-        img_ = img_.astype(np.uint8, copy=False)
+        # print('\nGet example in voc parser>>>')
+        # print(id_)
+        # print(img.shape)
+        # # C H W -> H W C, RGB -> BGR, np.float32 -> np.uint8
+        # img_ = img.transpose((1, 2, 0))
+        # img_ = img_[...,::-1].copy()
+        # img_ = img_.astype(np.uint8, copy=False)
         
-        cv.imwrite('ge_voc_parser.jpg', img_)
+        # cv.imwrite('ge_voc_parser.jpg', img_)
         ###>>>
 
         # if self.return_difficult:

@@ -51,14 +51,14 @@ def train(**kwargs):
     lr_decay_step = 5
     lr_decay_gamma = 0.1
     session = 1
-    resume = False # Resume checkpoint or not
-    checksession = 0 # Checksession to load model
+    resume = True # Resume checkpoint or not
+    checksession = 1 # Checksession to load model
     checkepoch = 1 # Checkepoch to load model
-    checkpoint = 1 # Checkpoint to load model
+    checkpoint = 11539 # Checkpoint to load model
 
 
     output_dir = (save_dir + "/" + cfg.backend_model + 
-        "/" + cfg.voc_dataset_name)
+        "_RPN_" + cfg.voc_dataset_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -137,6 +137,7 @@ def train(**kwargs):
 
             # pdb.set_trace()
 
+
             rpn_vgg16.zero_grad()
             rois, rpn_loss_cls, rpn_loss_box, _ = rpn_vgg16(
                 img, im_info, bbox, num_bbox)
@@ -160,17 +161,17 @@ def train(**kwargs):
                 loss_rpn_box = rpn_loss_box.item()
 
 
-            print("[session %d][epoch %2d][iter %4d/%4d] loss: %.4f, lr: %.2e" \
-                                    % (session, epoch, step, iters_per_epoch, loss_temp, lr))
-            print("\t\t\trpn_cls: %.4f, rpn_box: %.4f" % (loss_rpn_cls, loss_rpn_box))
+                print("[session %d][epoch %2d][iter %4d/%4d] loss: %.4f, lr: %.2e" \
+                                        % (session, epoch, step, iters_per_epoch, loss_temp, lr))
+                print("\t\t\trpn_cls: %.4f, rpn_box: %.4f" % (loss_rpn_cls, loss_rpn_box))
 
-            if cfg.use_tfboard:
-              info = {
-                'loss': loss_temp,
-                'loss_rpn_cls': loss_rpn_cls,
-                'loss_rpn_box': loss_rpn_box
-              }
-              logger.add_scalars("logs_s_{}/losses".format(session), info, (epoch - 1) * iters_per_epoch + step)
+                if cfg.use_tfboard:
+                  info = {
+                    'loss': loss_temp,
+                    'loss_rpn_cls': loss_rpn_cls,
+                    'loss_rpn_box': loss_rpn_box
+                  }
+                  logger.add_scalars("logs_s_{}/losses".format(session), info, (epoch - 1) * iters_per_epoch + step)
 
             loss_temp = 0
             start = time.time()

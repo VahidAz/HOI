@@ -3,14 +3,17 @@
 """
 """
 
+
 import os
 import time
 
 import pdb
 from tqdm import tqdm
 import numpy as np
-import torch
 import cv2 as cv
+
+import torch
+import torch.nn as nn
 
 from configs.config import cfg
 from data.voc_dataset import Dataset, inverse_normalize
@@ -51,10 +54,11 @@ def train(**kwargs):
     lr_decay_step = 5
     lr_decay_gamma = 0.1
     session = 1
-    resume = True # Resume checkpoint or not
+    resume = False # Resume checkpoint or not
     checksession = 1 # Checksession to load model
     checkepoch = 1 # Checkepoch to load model
-    checkpoint = 11539 # Checkpoint to load model
+    checkpoint = 0 # Checkpoint to load model
+    mGPUs = True
 
 
     output_dir = (save_dir + "/" + cfg.backend_model + 
@@ -66,7 +70,7 @@ def train(**kwargs):
     # Train dataset loader
     train_dataset = Dataset(cfg)
     train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=1, shuffle=True, num_workers=1)
+        train_dataset, batch_size=1, shuffle=True, num_workers=2)
     print('Len Train Data: ', len(train_dataloader))
     iters_per_epoch = len(train_dataloader) / cfg.batch_size
 
@@ -108,6 +112,10 @@ def train(**kwargs):
         print("loaded checkpoint %s" % (load_name))
 
 
+    if mGPUs:
+        rpn_vgg16 = nn.DataParallel(rpn_vgg16).cuda()
+
+
     if cfg.use_tfboard:
         from tensorboardX import SummaryWriter
         logger = SummaryWriter("logs")
@@ -130,8 +138,7 @@ def train(**kwargs):
             img = img.cuda()
             bbox = bbox.cuda()
             lbls = lbls.cuda()
-            im_info = im_info.view(-1, 3)
-            im_info = im_info.cuda()
+            im_info = im_info.view(-1, 3).cuda()
             num_bbox = num_bbox.cuda()
 
 
@@ -157,8 +164,13 @@ def train(**kwargs):
                 if step > 0:
                   loss_temp /= (disp_interval + 1)
 
-                loss_rpn_cls = rpn_loss_cls.item()
-                loss_rpn_box = rpn_loss_box.item()
+
+                if mGPUs:
+                    loss_rpn_cls = rpn_loss_cls.mean().item()
+                    loss_rpn_box = rpn_loss_box.mean().item()
+                else:
+                    loss_rpn_cls = rpn_loss_cls.item()
+                    loss_rpn_box = rpn_loss_box.item()
 
 
                 print("[session %d][epoch %2d][iter %4d/%4d] loss: %.4f, lr: %.2e" \

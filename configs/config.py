@@ -39,7 +39,7 @@ class Config(object):
     # For reproducibility
     RNG_SEED = 3
     
-    epoch = 2
+    epoch = 20
     batch_size = 1
 
     # Weight decay, for regularization
@@ -54,33 +54,43 @@ class Config(object):
     # Whether to initialize the weights with truncated normal distribution
     TRAIN_TRUNCATED = False
 
-
-
     TRAIN_HAS_RPN = True
+
     # IOU >= thresh: positive example
     TRAIN_RPN_POSITIVE_OVERLAP = 0.7
+
     # IOU < thresh: negative example
     TRAIN_RPN_NEGATIVE_OVERLAP = 0.3
+
     # If an anchor statisfied by positive and negative conditions set to negative
     TRAIN_RPN_CLOBBER_POSITIVES = False
+
     # Max number of foreground examples
     TRAIN_RPN_FG_FRACTION = 0.5
+
     # Total number of examples
     TRAIN_RPN_BATCHSIZE = 256
+
     # NMS threshold used on RPN proposals
     TRAIN_RPN_NMS_THRESH = 0.7
+
     # Number of top scoring boxes to keep before apply NMS to RPN proposals
     TRAIN_RPN_PRE_NMS_TOP_N = 12000
+
     # Number of top scoring boxes to keep after applying NMS to RPN proposals
     TRAIN_RPN_POST_NMS_TOP_N = 2000
+
     # Proposal height and width both need to be greater than RPN_MIN_SIZE (at orig image scale)
     TRAIN_RPN_MIN_SIZE = 8
+
     # Deprecated (outside weights)
     TRAIN_RPN_BBOX_INSIDE_WEIGHTS = (1.0, 1.0, 1.0, 1.0)
+
     # Give the positive RPN examples weight of p * 1 / {num positives}
     # and give negatives a weight of (1 - p)
     # Set to -1.0 to use uniform example weighting
     TRAIN_RPN_POSITIVE_WEIGHT = -1.0
+
     # Whether to use all ground truth bounding boxes for training,
     # For COCO, setting USE_ALL_GT to False will exclude boxes that are flagged as ''iscrowd''
     TRAIN_USE_ALL_GT = True
@@ -89,6 +99,18 @@ class Config(object):
     TRAIN_BN_TRAIN = False
 
     USE_GPU_NMS = True
+
+    ## NMS threshold used on RPN proposals
+    TEST_RPN_NMS_THRESH = 0.7
+    
+    ## Number of top scoring boxes to keep before apply NMS to RPN proposals
+    TEST_RPN_PRE_NMS_TOP_N = 6000
+
+    ## Number of top scoring boxes to keep after applying NMS to RPN proposals
+    TEST_RPN_POST_NMS_TOP_N = 300
+
+    # Proposal height and width both need to be greater than RPN_MIN_SIZE (at orig image scale)
+    TEST_RPN_MIN_SIZE = 16
 
     # Make tensorboard logs
     use_tfboard = True
@@ -105,7 +127,7 @@ class Config(object):
         if self.voc_dataset_name == 'pascal_voc2012':
             self.voc_dataset_trainval = (
                 './datasets/PASCAL_VOC/VOC2012/VOC2012_trainval/')
-            self.voc_dataset_test = './datasets/PASCAL_VOC/VOC2012/VOC2012_test/'
+            self.voc_dataset_test = './datasets/PASCAL_VOC/VOC2007/VOC2007_test/'
             self.min_size = 600
             self.max_size = 1000
             self.anchor_scales = [8, 16, 32]

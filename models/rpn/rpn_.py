@@ -85,14 +85,13 @@ class RPN_(nn.Module):
         rpn_bbox_pred = self.RPN_bbox_pred(rpn_conv1)
 
         # proposal layer
-        cfg_key = 'TRAIN' #if self.training else 'TEST'
+        cfg_key = 'TRAIN' if self.training else 'TEST'
 
         rois = self.RPN_proposal((rpn_cls_prob.data, rpn_bbox_pred.data,
                                  im_info, cfg_key))
 
         # Generating training labels and build the rpn loss
-        # if self.training:
-        if True:
+        if self.training:
             assert gt_boxes is not None
 
             self.rpn_loss_cls = 0

@@ -145,3 +145,37 @@ class Dataset:
 
     def num_classes(self):
         return self.db.num_classes()
+
+
+class TestDataset:
+    def __init__(self, _cfg):
+        self.cfg = _cfg
+        self.db = VOCPARSER(
+            self.cfg.voc_dataset_test, _split='test', 
+            _use_difficult=True)
+
+
+    def __getitem__(self, _idx):
+        img, bbox, label, difficult = self.db.get_example(_idx)
+
+        img, scale = preprocess(img, 
+            self.cfg.min_size, self.cfg.max_size, 
+            self.cfg.pretrained, self.cfg.pretrained_caffe)
+
+        tmp_im_info = np.zeros(shape=(1, 3))
+        tmp_im_info[0][0] = img.shape[1]
+        tmp_im_info[0][1] = img.shape[2]
+        tmp_im_info[0][2] = scale
+
+        bbox_num_np = np.asarray([bbox.shape[0]])
+
+        return img.copy(), bbox.copy(), label.copy(), \
+            tmp_im_info.copy(), bbox_num_np.copy()
+
+
+    def __len__(self):
+        return len(self.db)
+
+
+    def num_classes(self):
+        return self.db.num_classes()

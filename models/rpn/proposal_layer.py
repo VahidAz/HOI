@@ -74,6 +74,11 @@ class _ProposalLayer(nn.Module):
             post_nms_topN = cfg.TRAIN_RPN_POST_NMS_TOP_N
             nms_thresh    = cfg.TRAIN_RPN_NMS_THRESH
             min_size      = cfg.TRAIN_RPN_MIN_SIZE
+        elif cfg_key == 'TEST':
+            pre_nms_topN  = cfg.TEST_RPN_PRE_NMS_TOP_N
+            post_nms_topN = cfg.TEST_RPN_POST_NMS_TOP_N
+            nms_thresh    = cfg.TEST_RPN_NMS_THRESH
+            min_size      = cfg.TEST_RPN_MIN_SIZE
 
         batch_size = bbox_deltas.size(0)
 

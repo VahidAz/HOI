@@ -16,6 +16,7 @@ class Config(object):
     voc_dataset_trainval = None
     voc_dataset_test = None
 
+    imgnet_vid_dataset_name = 'ILSVRC2015'
     imgnet_vid_dataset_train = './datasets/ILSVRC2015/'
 
     # Dataset properties
@@ -98,6 +99,20 @@ class Config(object):
     # Whether to tune the batch normalization parameters during training
     TRAIN_BN_TRAIN = False
 
+    TRAIN_BBOX_NORMALIZE_MEANS = (0.0, 0.0, 0.0, 0.0)
+    TRAIN_BBOX_NORMALIZE_STDS = (0.1, 0.1, 0.2, 0.2)
+    TRAIN_BBOX_INSIDE_WEIGHTS = (1.0, 1.0, 1.0, 1.0)
+    TRAIN_BBOX_NORMALIZE_TARGETS_PRECOMPUTED = True
+
+    POOLING_SIZE = 7
+    CROP_RESIZE_WITH_MAX_POOL = True
+
+    TRAIN_BATCH_SIZE = 128
+    TRAIN_FG_FRACTION = 0.25
+    TRAIN_FG_THRESH = 0.5
+    TRAIN_BG_THRESH_HI = 0.5
+    TRAIN_BG_THRESH_LO = 0.1
+
     USE_GPU_NMS = True
 
     ## NMS threshold used on RPN proposals
@@ -111,6 +126,9 @@ class Config(object):
 
     # Proposal height and width both need to be greater than RPN_MIN_SIZE (at orig image scale)
     TEST_RPN_MIN_SIZE = 16
+
+
+    POOLING_MODE  = 'align'
 
     # Make tensorboard logs
     use_tfboard = True

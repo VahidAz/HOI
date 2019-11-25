@@ -4,6 +4,10 @@
 """
 
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import time
 
@@ -16,10 +20,10 @@ import torch
 import torch.nn as nn
 
 from configs.config import cfg
-from data.voc_dataset import Dataset, inverse_normalize
+from data.imagenet_vid_dataset import Dataset, inverse_normalize
 from models.libs.utils import array_tool as at
 
-from models.rpn.rpn_vgg16 import RPN_VGG16
+from models.vid_obj_det.vid_obj_det_vgg16 import VID_OBJ_DET_VGG16
 from models.libs.utils.net_utils import weights_normal_init, save_net, load_net, \
       adjust_learning_rate, save_checkpoint, clip_gradient
 
@@ -61,7 +65,7 @@ def train(**kwargs):
 
 
     output_dir = (save_dir + "/" + cfg.backend_model + 
-        "_RPN_" + cfg.voc_dataset_name)
+        "_VIDOBJDET_" + cfg.imgnet_vid_dataset_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -75,13 +79,13 @@ def train(**kwargs):
 
 
     if cfg.backend_model == 'vgg16':
-        rpn_vgg16 = RPN_VGG16(cfg)
-    rpn_vgg16 = rpn_vgg16.cuda()
-    rpn_vgg16.create_architecture()
+        vid_vgg16 = VID_OBJ_DET_VGG16(cfg, _n_classes=train_dataset.num_classes(), _class_agnostic=False)
+    vid_vgg16 = vid_vgg16.cuda()
+    vid_vgg16.create_architecture()
 
 
     params = []
-    for key, value in dict(rpn_vgg16.named_parameters()).items():
+    for key, value in dict(vid_vgg16.named_parameters()).items():
         if value.requires_grad:
             if 'bias' in key:
                 params += [{'params':[value],'lr':lr*(cfg.TRAIN_DOUBLE_BIAS + 1), \
@@ -99,7 +103,7 @@ def train(**kwargs):
 
     if resume:
         load_name = os.path.join(output_dir,
-          'rpn_vgg16_{}_{}_{}.pth'.format(
+          'vid_vgg16_{}_{}_{}.pth'.format(
             checksession, checkepoch, checkpoint))
         print("loading checkpoint %s" % (load_name))
         checkpoint = torch.load(load_name)
@@ -112,7 +116,7 @@ def train(**kwargs):
 
 
     if mGPUs:
-        rpn_vgg16 = nn.DataParallel(rpn_vgg16).cuda()
+        vid_vgg16 = nn.DataParallel(vid_vgg16).cuda()
 
 
     if cfg.use_tfboard:
@@ -120,9 +124,9 @@ def train(**kwargs):
         logger = SummaryWriter("logs")
 
 
-    for epoch in range(cfg.epoch):
+    for epoch in range(2):
         # Setting to train mode
-        rpn_vgg16.train()
+        vid_vgg16.train()
         loss_temp = 0
         start = time.time()
 
@@ -131,31 +135,47 @@ def train(**kwargs):
             lr *= lr_decay_gamma
 
         for step, (img, bbox, lbls, 
-            im_info, num_bbox) in tqdm(enumerate(train_dataloader)):
+            im_info, num_bbox, corrupted) in tqdm(enumerate(train_dataloader)):
+
+            if corrupted[0] > 0:
+                print('\n\n CORRUPTED \n\n')
+                continue
 
             # CUDA
+            img = img.view(img.shape[1], img.shape[2], img.shape[3], img.shape[4])
             img = img.cuda()
+
+            bbox = bbox.view(bbox.shape[1], bbox.shape[2], bbox.shape[3])
             bbox = bbox.cuda()
+
+            lbls = lbls.view(lbls.shape[1], lbls.shape[2])
             lbls = lbls.cuda()
+
+            im_info = im_info.view(im_info.shape[1], im_info.shape[2], im_info.shape[3])
             im_info = im_info.view(-1, 3).cuda()
+
+            num_bbox = num_bbox.view(num_bbox.shape[1], num_bbox.shape[2])
             num_bbox = num_bbox.cuda()
 
 
             # pdb.set_trace()
 
 
-            rpn_vgg16.zero_grad()
-            rois, rpn_loss_cls, rpn_loss_box, _ = rpn_vgg16(
-                img, im_info, bbox, num_bbox)
+            vid_vgg16.zero_grad()
+            rois, cls_prob, bbox_pred, \
+            rpn_loss_cls, rpn_loss_box, \
+            vid_vgg16_loss_cls, vid_vgg16_loss_bbox, \
+            rois_label = vid_vgg16(img, im_info, bbox, num_bbox)
 
-            loss = rpn_loss_cls.mean() + rpn_loss_box.mean()
+            loss = rpn_loss_cls.mean() + rpn_loss_box.mean() \
+                + vid_vgg16_loss_cls.mean() + vid_vgg16_loss_bbox.mean()
             loss_temp += loss.item()
 
             # Backward
             optimizer.zero_grad()
             loss.backward()
             if cfg.backend_model == "vgg16":
-              clip_gradient(rpn_vgg16, 10.)
+                clip_gradient(vid_vgg16, 10.)
             optimizer.step()
 
             if step % disp_interval == 0:
@@ -167,32 +187,46 @@ def train(**kwargs):
                 if mGPUs:
                     loss_rpn_cls = rpn_loss_cls.mean().item()
                     loss_rpn_box = rpn_loss_box.mean().item()
+                    loss_vid_vgg16_cls = vid_vgg16_loss_cls.mean().item()
+                    loss_vid_vgg16_box = vid_vgg16_loss_bbox.mean().item()
+                    fg_cnt = torch.sum(rois_label.data.ne(0))
+                    bg_cnt = rois_label.data.numel() - fg_cnt
                 else:
                     loss_rpn_cls = rpn_loss_cls.item()
                     loss_rpn_box = rpn_loss_box.item()
+                    loss_vid_vgg16_cls = vid_vgg16_loss_cls.item()
+                    loss_vid_vgg16_box = vid_vgg16_loss_bbox.item()
+                    fg_cnt = torch.sum(rois_label.data.ne(0))
+                    bg_cnt = rois_label.data.numel() - fg_cnt
 
 
                 print("[session %d][epoch %2d][iter %4d/%4d] loss: %.4f, lr: %.2e" \
                                         % (session, epoch, step, iters_per_epoch, loss_temp, lr))
-                print("\t\t\trpn_cls: %.4f, rpn_box: %.4f" % (loss_rpn_cls, loss_rpn_box))
+                print("\t\t\tfg/bg=(%d/%d), time cost: %f" % (fg_cnt, bg_cnt, end-start))
+                print("\t\t\trpn_cls: %.4f, rpn_box: %.4f, vid_vgg16_cls: %.4f, vid_vgg16_box %.4f" \
+                      % (loss_rpn_cls, loss_rpn_box, loss_vid_vgg16_cls, loss_vid_vgg16_box))
 
                 if cfg.use_tfboard:
                   info = {
                     'loss': loss_temp,
                     'loss_rpn_cls': loss_rpn_cls,
-                    'loss_rpn_box': loss_rpn_box
+                    'loss_rpn_box': loss_rpn_box,
+                    'loss_vid_vgg16_cls': loss_vid_vgg16_cls,
+                    'loss_vid_vgg16_box': loss_vid_vgg16_box
                   }
                   logger.add_scalars("logs_s_{}/losses".format(session), info, (epoch - 1) * iters_per_epoch + step)
 
             loss_temp = 0
             start = time.time()
 
-    save_name = os.path.join(output_dir, 'rpn_vgg16_{}_{}_{}.pth'.format(session, epoch, step))
+    save_name = os.path.join(output_dir, 'vid_vgg16_{}_{}_{}.pth'.format(session, epoch, step))
     save_checkpoint({
       'session': session,
       'epoch': epoch + 1,
-      'model': rpn_vgg16.module.state_dict() if mGPUs else rpn_vgg16.state_dict(),
+      'model': vid_vgg16.module.state_dict() if mGPUs else vid_vgg16.state_dict(),
       'optimizer': optimizer.state_dict(),
+      'pooling_mode': cfg.POOLING_MODE,
+      'class_agnostic': args.class_agnostic,
     }, save_name)
     print('save model: {}'.format(save_name))
 

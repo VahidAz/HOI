@@ -102,11 +102,11 @@ class IMGNETVIDPARSER:
         # Each id has some images(tw)
         for name in id_:
             file_name = name + '.JPEG'
-            print('Img path: ', file_name)
+            # print('Img path: ', file_name)
             img = read_image(file_name, color=True)
 
             anno_path = name.replace('Data', 'Annotations') + '.xml'
-            print('Annot path: ', anno_path)
+            # print('Annot path: ', anno_path)
             anno = ET.parse(anno_path)
 
             # Current name info

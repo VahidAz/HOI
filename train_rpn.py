@@ -120,7 +120,7 @@ def train(**kwargs):
         logger = SummaryWriter("logs")
 
 
-    for epoch in range(cfg.epoch):
+    for epoch in range(start_epoch, cfg.epoch + 1):
         # Setting to train mode
         rpn_vgg16.train()
         loss_temp = 0

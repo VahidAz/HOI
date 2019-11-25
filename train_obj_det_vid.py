@@ -124,7 +124,7 @@ def train(**kwargs):
         logger = SummaryWriter("logs")
 
 
-    for epoch in range(2):
+    for epoch in range(start_epoch, cfg.epoch + 1):
         # Setting to train mode
         vid_vgg16.train()
         loss_temp = 0

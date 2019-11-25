@@ -159,8 +159,13 @@ class IMGNETVIDPARSER:
             label_list = label_list_tmp
             occluded_list = occluded_list_tmp
 
+            # print(len(bbox_list))
+            # print(len(label_list))
+            # print(len(occluded_list))
+
 
         if len(min(bbox_list, key=len)) == 0:
+            print(min(bbox_list, key=len))
             print('WARNING, this id is corrupted!')
             corrupted = 1 # True
 

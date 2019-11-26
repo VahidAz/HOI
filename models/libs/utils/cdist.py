@@ -1,19 +1,20 @@
 import time
 import torch
 import pdb
- 
- 
+
+
 #@torch.jit.script
-def my_cdist(x1, x2):
+def cdist_v1(x1, x2):
     x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
     x2_norm = x2.pow(2).sum(dim=-1, keepdim=True)
     res = torch.addmm(x2_norm.transpose(-2, -1), x1, x2.transpose(-2, -1), alpha=-2).add_(x1_norm)
     #res = res.clamp_min_(1e-30).sqrt_()
     res = res.clamp(min=1e-30).sqrt_()
     return res
-  
+
+
 #@torch.jit.script
-def fast_cdist(x1, x2):
+def cdist_v2(x1, x2):
     adjustment = x1.mean(-2, keepdim=True)
     x1 = x1 - adjustment
     x2 = x2 - adjustment  # x1 and x2 should be identical in all dims except -2 at this point
@@ -35,21 +36,3 @@ def fast_cdist(x1, x2):
     reverse_norm_res = 1 - normalized_res
     # return res
     return reverse_norm_res
-  
-  
- # 36 #@torch.jit.script
- # 37 def cdist_l2(x1, x2):
- # 38     x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
- # 39     x2_norm = x2.pow(2).sum(dim=-1, keepdim=True)
- # 40     res = torch.baddbmm(x2_norm.transpose(-2, -1), x1, x2.transpose(-2, -1), alpha=-2).add_(x1_norm).clamp(min=1e-30).sqrt_()
- # 41     return res
- # 42 
- # 43 def v3_cdist_l2(b1, b2):
- # 44     b1_norm = b1.pow(2).sum(dim=-1, keepdim=True)
- # 45     b2_norm = b2.pow(2).sum(dim=-1, keepdim=True)
- # 46     res = torch.baddbmm(b2_norm.transpose(-2, -1), b1, b2.transpose(-2, -1), beta=1, alpha=-2).add_(b1_norm).clamp_min_(1e-30).sqrt_()
- # 47     return res
- # 48 
- # 49 a = torch.randn(128, 25088).cuda()
- # 50 b = torch.randn(128, 25088).cuda()
-  

@@ -91,6 +91,22 @@ class _VIDOBJDET(nn.Module):
 
         # Feed pooled features to top model
         pooled_feat = self._head_to_tail(pooled_feat)
+        pooled_feat2 = pooled_feat.view(5, 128, pooled_feat.shape[1])
+
+
+        for ii in range(self.cfg.time_win - 1):
+            first_feat = pooled_feat2[ii]
+            first_rois = rois[ii]
+
+            sec_feat = pooled_feat2[ii+1]
+            sec_rois = rois[ii+1]
+
+            # First value in rois is batch number, bbox is [1:]
+            cdist_res = fast_cdist(first_feat, sec_feat)
+
+
+            print('\n\n POPOPOPOPO \n\n')
+            pdb.set_trace()
 
         # Compute bbox offset
         bbox_pred = self._VIDOBJDET_bbox_pred(pooled_feat)
@@ -117,6 +133,9 @@ class _VIDOBJDET(nn.Module):
 
         cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
+
+        print('\n TEST TUBE \n')
+        pdb.set_trace()
 
         return rois, cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, _VIDOBJDET_loss_cls, _VIDOBJDET_loss_bbox, rois_label
 

@@ -56,12 +56,12 @@ def train(**kwargs):
     TRAIN_MOMENTUM = 0.9
     lr_decay_step = 5
     lr_decay_gamma = 0.1
-    session = 1
+    session = 2
     resume = False # Resume checkpoint or not
     checksession = 1 # Checksession to load model
     checkepoch = 1 # Checkepoch to load model
     checkpoint = 0 # Checkpoint to load model
-    mGPUs = True
+    mGPUs = False
 
 
     output_dir = (save_dir + "/" + cfg.backend_model + 

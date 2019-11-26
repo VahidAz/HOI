@@ -39,24 +39,24 @@ class VID_OBJ_DET_VGG16(_VIDOBJDET):
                 vgg.load_state_dict(
                     {k:v for k,v in state_dict.items() if k in vgg.state_dict()})
 
-        vgg.classifier = nn.Sequential(*list(vgg.classifier._modules.values())[:-1])
+        vgg.classifier = nn.Sequential(*list(vgg.classifier._modules.values())[:-1]).cuda()
 
         # Not using the last maxpool layer
-        self._VIDOBJDET_base = nn.Sequential(*list(vgg.features._modules.values())[:-1])
+        self._VIDOBJDET_base = nn.Sequential(*list(vgg.features._modules.values())[:-1]).cuda()
 
         # Fix the layers before conv3:
         for layer in range(10):
             for p in self._VIDOBJDET_base[layer].parameters(): p.requires_grad = False
 
-        self._VIDOBJDET_top = vgg.classifier
+        self._VIDOBJDET_top = vgg.classifier.cuda()
 
         # not using the last maxpool layer
-        self._VIDOBJDET_cls_score = nn.Linear(4096, self.n_classes)
+        self._VIDOBJDET_cls_score = nn.Linear(4096, self.n_classes).cuda()
 
         if self.class_agnostic:
-            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4)
+            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4).cuda()
         else:
-            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4 * self.n_classes)      
+            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4 * self.n_classes).cuda()   
 
 
     def _head_to_tail(self, pool5):

@@ -16,6 +16,8 @@ from models.libs.roi_crop.modules.roi_crop import _RoICrop
 from models.libs.roi_align.modules.roi_align import RoIAlignAvg
 from models.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
 from models.libs.utils.net_utils import _smooth_l1_loss, _crop_pool_layer, _affine_grid_gen, _affine_theta
+from models.libs.utils.cdist import cdist_v2
+from models.rpn.bbox_transform import clip_boxes, bbox_overlaps_batch, bbox_transform_batch
 
 
 class _VIDOBJDET(nn.Module):
@@ -41,6 +43,8 @@ class _VIDOBJDET(nn.Module):
 
         self.grid_size = self.cfg.POOLING_SIZE * 2 if self.cfg.CROP_RESIZE_WITH_MAX_POOL else self.cfg.POOLING_SIZE
         self._VIDOBJDET_roi_crop = _RoICrop()
+
+        self.tube_threshold = 1.0
 
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
@@ -91,33 +95,86 @@ class _VIDOBJDET(nn.Module):
 
         # Feed pooled features to top model
         pooled_feat = self._head_to_tail(pooled_feat)
-        pooled_feat2 = pooled_feat.view(5, 128, pooled_feat.shape[1])
+        pooled_feat_reshaped = pooled_feat.view(rois.shape[0], rois.shape[1], pooled_feat.shape[1])
 
+        rois_label_reshaped = rois_label.view(rois.shape[0], rois.shape[1])
+
+
+        # Making tube
+        # TODO: Replace it with a function
+        # TODO: Try LSTM data associatation
+        # TODO: Try to implement it better
+        final_val_all_frames = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.float32).cuda()
+        final_idx_all_frames = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.int32).cuda()
 
         for ii in range(self.cfg.time_win - 1):
-            first_feat = pooled_feat2[ii]
-            first_rois = rois[ii]
-
-            sec_feat = pooled_feat2[ii+1]
-            sec_rois = rois[ii+1]
-
             # First value in rois is batch number, bbox is [1:]
-            cdist_res = fast_cdist(first_feat, sec_feat)
+            first_feat = pooled_feat_reshaped[ii]
+            first_rois = (rois[ii])[:, 1:]
+            first_rois_reshaped = first_rois.view(1, first_rois.shape[0], first_rois.shape[1])
+
+            sec_feat = pooled_feat_reshaped[ii+1]
+            sec_rois = (rois[ii+1])[:, 1:]
+            sec_rois_reshaped = sec_rois.view(1, sec_rois.shape[0], sec_rois.shape[1])
+
+            # Dist_res, 0 max, 1 min
+            # Dist_res_reverse, 0 min, 1 max
+            # Overlap, 0 min, 1 max
+            dist_res, dist_res_reverse = cdist_v2(first_feat, sec_feat)
+            overlaps_res = bbox_overlaps_batch(first_rois, sec_rois_reshaped)
+            overlaps_res_reshaped = overlaps_res.squeeze()
+
+            # Final matrix
+            final_metric = overlaps_res_reshaped + dist_res_reverse
+            final_val, final_idx = torch.max(final_metric, 0)
+
+            final_val_all_frames[ii, :] = final_val
+            final_idx_all_frames[ii, :] = final_idx
 
 
-            print('\n\n POPOPOPOPO \n\n')
-            pdb.set_trace()
+        # Making pooled_feat for tube
+        # TODO: Write a vectorized version or a better one
+        # TODO: Current aggregation is sum, we need to try other aggrigation methods
+        # We cannot use label for matching since we don't have at test time
+        tube_pooled_feat = torch.zeros(pooled_feat.shape[0], pooled_feat.shape[1], dtype=torch.float32).cuda()
+        tube_rois_label = torch.zeros(pooled_feat.shape[0], dtype=torch.float32).cuda()
+
+        count_tube = 0
+        for ii in range(rois.shape[1]):
+            tmp_feat = torch.zeros(pooled_feat.shape[1], dtype=torch.float32).cuda()
+            tmp_feat += pooled_feat_reshaped[0][ii]
+            tmp_flag = True
+            ref_lbl = rois_label_reshaped[0][ii]
+            for jj in range(rois.shape[0] - 1):
+                if (final_val_all_frames[jj][ii] >= self.tube_threshold):
+                    tmp_feat += pooled_feat_reshaped[jj][final_idx_all_frames[jj][ii]]
+                else:
+                    tmp_flag = False
+                    break
+
+            if tmp_flag:
+                tube_pooled_feat[count_tube][:] = tmp_feat
+                tube_rois_label[count_tube] = ref_lbl
+                count_tube += 1
+
+        tube_pooled_feat = tube_pooled_feat[:count_tube]
+        tube_rois_label = tube_rois_label[:count_tube]
+
+        print('\nGGGGG \n')
+        pdb.set_trace()
 
         # Compute bbox offset
-        bbox_pred = self._VIDOBJDET_bbox_pred(pooled_feat)
+        # bbox_pred = self._VIDOBJDET_bbox_pred(tube_pooled_feat)
+
         if self.training and not self.class_agnostic:
             # select the corresponding columns according to roi labels
-            bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 4), 4)
-            bbox_pred_select = torch.gather(bbox_pred_view, 1, rois_label.view(rois_label.size(0), 1, 1).expand(rois_label.size(0), 1, 4))
-            bbox_pred = bbox_pred_select.squeeze(1)
+            # bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 4), 4)
+            # bbox_pred_select = torch.gather(bbox_pred_view, 1, rois_label.view(rois_label.size(0), 1, 1).expand(rois_label.size(0), 1, 4))
+            # bbox_pred = bbox_pred_select.squeeze(1)
+            pass
 
         # compute object classification probability
-        cls_score = self._VIDOBJDET_cls_score(pooled_feat)
+        cls_score = self._VIDOBJDET_cls_score(tube_pooled_feat)
         cls_prob = F.softmax(cls_score, 1)
 
         _VIDOBJDET_loss_cls = 0
@@ -128,11 +185,11 @@ class _VIDOBJDET(nn.Module):
             _VIDOBJDET_loss_cls = F.cross_entropy(cls_score, rois_label)
 
             # bounding box regression L1 loss
-            _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
+            # _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
 
 
         cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
-        bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
+        # bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
         print('\n TEST TUBE \n')
         pdb.set_trace()

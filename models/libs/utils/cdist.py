@@ -35,4 +35,4 @@ def cdist_v2(x1, x2):
     normalized_res = (res-torch.min(res))/(torch.max(res)-torch.min(res))
     reverse_norm_res = 1 - normalized_res
     # return res
-    return reverse_norm_res
+    return normalized_res, reverse_norm_res

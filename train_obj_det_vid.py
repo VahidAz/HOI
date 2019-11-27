@@ -22,7 +22,6 @@ import torch.nn as nn
 from configs.config import cfg
 from data.imagenet_vid_dataset import Dataset, inverse_normalize
 from models.libs.utils import array_tool as at
-
 from models.vid_obj_det.vid_obj_det_vgg16 import VID_OBJ_DET_VGG16
 from models.libs.utils.net_utils import weights_normal_init, save_net, load_net, \
       adjust_learning_rate, save_checkpoint, clip_gradient

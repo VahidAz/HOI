@@ -191,6 +191,7 @@ class IMGNETVIDPARSER:
 
 
 IMGNET_VID_BBOX_LABEL_NAMES_REAL = (
+    'background', # Zero for background
     'airplane',
     'antelope',
     'bear',
@@ -225,6 +226,7 @@ IMGNET_VID_BBOX_LABEL_NAMES_REAL = (
 
 
 IMGNET_VID_BBOX_LABEL_NAMES = (
+    'background', # Zero for background
     'n02691156',
     'n02419796',
     'n02131653',

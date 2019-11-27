@@ -83,6 +83,7 @@ class VOCPARSER:
 
 
 VOC_BBOX_LABEL_NAMES = (
+    'background', # Zero for backgrund
     'aeroplane',
     'bicycle',
     'bird',

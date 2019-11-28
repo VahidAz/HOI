@@ -145,33 +145,39 @@ class _VIDOBJDET(nn.Module):
             tmp_feat += pooled_feat_reshaped[0][ii]
             tmp_flag = True
             ref_lbl = rois_label_reshaped[0][ii]
+            sum_lbl = 0
+            sum_lbl += ref_lbl
             for jj in range(rois.shape[0] - 1):
                 if (final_val_all_frames[jj][ii] >= self.tube_threshold):
-                    tmp_feat += pooled_feat_reshaped[jj][final_idx_all_frames[jj][ii]]
+                    tmp_feat += pooled_feat_reshaped[jj+1][final_idx_all_frames[jj][ii]]
+                    sum_lbl += rois_label_reshaped[jj+1][ii]
                 else:
                     tmp_flag = False
                     break
 
             if tmp_flag:
                 tube_pooled_feat[count_tube][:] = tmp_feat
-                tube_rois_label[count_tube] = ref_lbl
+                if int(sum_lbl/rois.shape[0]) == ref_lbl:
+                    tube_rois_label[count_tube] = ref_lbl
+                else:
+                    tube_rois_label[count_tube] = 0
                 count_tube += 1
 
-        tube_pooled_feat = tube_pooled_feat[:count_tube]
-        tube_rois_label = tube_rois_label[:count_tube]
+        # TODO: Check it causes problem to give many zeros!
+        # Uncommenting this causes problem because of batch size
 
-        print('\nGGGGG \n')
-        pdb.set_trace()
+        # tube_pooled_feat = tube_pooled_feat[:count_tube]
+        # tube_rois_label = tube_rois_label[:count_tube]
+
 
         # Compute bbox offset
-        # bbox_pred = self._VIDOBJDET_bbox_pred(tube_pooled_feat)
+        bbox_pred = self._VIDOBJDET_bbox_pred(tube_pooled_feat)
 
         if self.training and not self.class_agnostic:
             # select the corresponding columns according to roi labels
-            # bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 4), 4)
-            # bbox_pred_select = torch.gather(bbox_pred_view, 1, rois_label.view(rois_label.size(0), 1, 1).expand(rois_label.size(0), 1, 4))
-            # bbox_pred = bbox_pred_select.squeeze(1)
-            pass
+            bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 4), 4)
+            bbox_pred_select = torch.gather(bbox_pred_view, 1, rois_label.view(rois_label.size(0), 1, 1).expand(rois_label.size(0), 1, 4))
+            bbox_pred = bbox_pred_select.squeeze(1)
 
         # compute object classification probability
         cls_score = self._VIDOBJDET_cls_score(tube_pooled_feat)
@@ -182,17 +188,17 @@ class _VIDOBJDET(nn.Module):
 
         if self.training:
             # classification loss
-            _VIDOBJDET_loss_cls = F.cross_entropy(cls_score, rois_label)
+            _VIDOBJDET_loss_cls = F.cross_entropy(cls_score, tube_rois_label.long())
 
             # bounding box regression L1 loss
-            # _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
+            _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
 
 
-        cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
+        # TODO: doreally need this!
+
+        # cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         # bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
-        print('\n TEST TUBE \n')
-        pdb.set_trace()
 
         return rois, cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, _VIDOBJDET_loss_cls, _VIDOBJDET_loss_bbox, rois_label
 

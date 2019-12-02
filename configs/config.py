@@ -40,7 +40,7 @@ class Config(object):
     # For reproducibility
     RNG_SEED = 3
     
-    epoch = 20
+    epoch = 2
     batch_size = 1
 
     # Weight decay, for regularization

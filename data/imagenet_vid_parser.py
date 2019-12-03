@@ -212,7 +212,7 @@ IMGNET_VID_BBOX_LABEL_NAMES_REAL = (
     'monkey',
     'motorcycle',
     'rabbit',
-    'red_panda',
+    'redl_panda',
     'sheep',
     'snake',
     'squirrel',

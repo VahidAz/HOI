@@ -16,7 +16,7 @@ from models.libs.roi_crop.modules.roi_crop import _RoICrop
 from models.libs.roi_align.modules.roi_align import RoIAlignAvg
 from models.rpn.proposal_target_layer_cascade import _ProposalTargetLayer
 from models.libs.utils.net_utils import _smooth_l1_loss, _crop_pool_layer, _affine_grid_gen, _affine_theta
-from models.vid_obj_det.tube_maker import make_tube_1
+from models.vid_obj_det.tube_maker import *
 
 
 class _VIDOBJDET(nn.Module):
@@ -96,8 +96,12 @@ class _VIDOBJDET(nn.Module):
         pooled_feat = self._head_to_tail(pooled_feat)
 
 
-        # Making rube
-        tube_pooled_feat, tube_rois_label = make_tube_1(pooled_feat, rois_label, rois, self.cfg, im_data)
+        # Making Tube
+        tube_pooled_feat, tube_rois_label = make_tube_ff_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+        tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+        tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+        tube_pooled_feat, tube_rois_label = make_tube_bf_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+        exit(0)
 
 
         # Compute bbox offset

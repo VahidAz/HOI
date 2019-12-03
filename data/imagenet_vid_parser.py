@@ -140,6 +140,8 @@ class IMGNETVIDPARSER:
             occluded_list.append(occluded_tmp)
 
 
+        # TODO: instead of clipping maigh padding works better!
+
         try:
             bbox_np = np.stack(bbox_list).astype(np.float32)
         except:

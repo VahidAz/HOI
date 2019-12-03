@@ -101,6 +101,8 @@ class _VIDOBJDET(nn.Module):
         tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
         tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
         tube_pooled_feat, tube_rois_label = make_tube_bf_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+        tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+        tube_pooled_feat, tube_rois_label = make_tube_bf_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
         exit(0)
 
 

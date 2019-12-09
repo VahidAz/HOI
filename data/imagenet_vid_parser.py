@@ -1,4 +1,5 @@
 import os
+import random
 
 import xml.etree.ElementTree as ET
 import fnmatch
@@ -6,13 +7,14 @@ import numpy as np
 from pprint import pprint
 import pdb
 import cv2 as cv
+from random import sample 
 
-from data.util import read_image
+from util import read_image
 
 
 class IMGNETVIDPARSER:
     def __init__(self, _data_dir, _split='train', 
-        _class_num=30, _time_win= 5, _use_occluded=True):
+        _class_num=30, _time_win= 5, _use_occluded=False):
         self.data_dir = _data_dir
         self.split = _split
         self.class_num = _class_num
@@ -27,6 +29,8 @@ class IMGNETVIDPARSER:
         self.ids = []
         self.label_names = IMGNET_VID_BBOX_LABEL_NAMES
 
+        max_each_class = 1000
+
         # For debugging
         total_ids_num = 0
 
@@ -40,40 +44,63 @@ class IMGNETVIDPARSER:
             print('id_file: ', id_file)
 
             cur_ids = [id_.strip()[:-2] for id_ in open(id_file)]
-            print('cur_ids: ', cur_ids)
+            # print('cur_ids: ', cur_ids)
+            print('Len cur ids: ', len(cur_ids))
 
             cur_lbl = ii
             print('lbl: ', cur_lbl)
 
-            for name in cur_ids:
+            pdb.set_trace()
+
+            max_each_set = round(max_each_class/len(cur_ids))
+            print('Max each set: ', max_each_set)
+
+            # all_num_data = []
+
+            for name_idx, name in enumerate(cur_ids):
                 imgs_path = os.path.join(
                     self.data_dir, 'Data/VID/' + self.split + '/' + name)
                 num_imgs = len(fnmatch.filter(
                     os.listdir(imgs_path), '*.JPEG'))
-                print('Name: ', name, '\tNum_imgs: ', num_imgs)
+                print('Name: ', name, '\tName Idx: ', name_idx, '\tNum_imgs: ', num_imgs)
 
-                # The number of valid sets, ignoring teh remaining ones
+                # all_num_data.append(num_imgs)
+
+                # The number of valid sets, ignoring the left over
                 num_usable = int(num_imgs/self.tw) * self.tw
                 print('Num_usuable: ', num_usable)
 
-                total_ids_num += int(num_imgs/self.tw)
+                all_ids_cur_id = []
 
                 for jj in range(num_usable):
-                    print('jj: ', jj)
+                    # print('jj: ', jj)
 
                     if jj % self.tw == 0:
                         if jj != 0:
-                            self.ids.append(cur_id)
+                            # self.ids.append(cur_id)
+                            all_ids_cur_id.append(cur_id)
 
                         cur_id = []
                         cur_id.append(imgs_path + '/' + format(jj, '06'))
                     else:
                         cur_id.append(imgs_path + '/' + format(jj, '06'))
 
-                self.ids.append(cur_id) # Last set
+                # self.ids.append(cur_id) # Last set
+                all_ids_cur_id.append(cur_id)
+
+                if len(all_ids_cur_id) > max_each_set:
+                    self.ids.extend(random.sample(all_ids_cur_id, max_each_set))
+                    total_ids_num += max_each_set
+                else:
+                    self.ids.extend(all_ids_cur_id)
+                    total_ids_num += int(num_imgs/self.tw)
+
 
                 print('Len all ids: ', len(self.ids))
                 print('Total ids num: ', total_ids_num)
+
+            # print('Min num in this class: ', np.min(np.asarray(all_num_data)))
+            pdb.set_trace()
 
 
         if len(self.ids) != total_ids_num:
@@ -262,7 +289,7 @@ IMGNET_VID_BBOX_LABEL_NAMES = (
 )
 
 
-# if __name__ == '__main__':
-#    test_obj = IMGNETVIDPARSER('./datasets/ILSVRC2015/')
-#    examp = test_obj.get_example(0)
-#    pdb.set_trace()
+if __name__ == '__main__':
+   test_obj = IMGNETVIDPARSER('../datasets/ILSVRC2015/')
+   examp = test_obj.get_example(0)
+   pdb.set_trace()

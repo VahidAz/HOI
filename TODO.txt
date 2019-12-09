@@ -1,0 +1,14 @@
+Code optimization
+Numba
+CuPy
+Torch tensor
+Torch script
+
+Using builtin function in pytorch
+
+Adding python header
+
+Better debugging
+
+Upgrade to pytorch last version
+

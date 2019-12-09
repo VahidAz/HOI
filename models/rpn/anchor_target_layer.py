@@ -93,14 +93,6 @@ class _AnchorTargetLayer(nn.Module):
         anchors = all_anchors[inds_inside, :]
 
         # label: 1 is positive, 0 is negative, -1 is dont care
-        # print('\nDEBUG\n')
-        # print(batch_size)
-        # print(inds_inside.size(0))
-        # print('KEEP: ', keep)
-        # import pdb
-        # if int(anchors.shape[0]) <= 0:
-        #     print('\nRIIIIDDDIIIIII')
-        #     pdb.set_trace()
         labels = gt_boxes.new(batch_size, inds_inside.size(0)).fill_(-1)
         bbox_inside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()
         bbox_outside_weights = gt_boxes.new(batch_size, inds_inside.size(0)).zero_()

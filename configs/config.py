@@ -7,7 +7,7 @@
 from pprint import pprint
 
 
-### TODO: soem of the pathes are hardcoded, they should move here
+### TODO: some of the paths are hardcoded, they should move here
 
 
 class Config(object):
@@ -145,6 +145,7 @@ class Config(object):
         if self.voc_dataset_name == 'pascal_voc2012':
             self.voc_dataset_trainval = (
                 './datasets/PASCAL_VOC/VOC2012/VOC2012_trainval/')
+            # VOC 2012 test files don't have correct id
             self.voc_dataset_test = './datasets/PASCAL_VOC/VOC2007/VOC2007_test/'
             self.min_size = 600
             self.max_size = 1000

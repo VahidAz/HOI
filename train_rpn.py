@@ -24,6 +24,9 @@ from models.libs.utils.net_utils import weights_normal_init, save_net, load_net,
       adjust_learning_rate, save_checkpoint, clip_gradient
 
 
+torch.backends.cudnn.benchmark = True
+
+
 def train(**kwargs):
     cfg._parse(kwargs)
 
@@ -68,6 +71,12 @@ def train(**kwargs):
 
     # Train dataset loader
     train_dataset = Dataset(cfg)
+
+    # TODO: Now we support only batch size 1
+    #       For having bigger batch size we need to find images with 
+    #       same size and group them or
+    #       We need to add FPN to have constant size for dense layers
+
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=1, shuffle=True, num_workers=2)
     print('Len Train Data: ', len(train_dataloader))
@@ -76,7 +85,7 @@ def train(**kwargs):
 
     if cfg.backend_model == 'vgg16':
         rpn_vgg16 = RPN_VGG16(cfg)
-    rpn_vgg16 = rpn_vgg16.cuda()
+        rpn_vgg16 = rpn_vgg16.cuda()
     rpn_vgg16.create_architecture()
 
 
@@ -117,10 +126,11 @@ def train(**kwargs):
 
     if cfg.use_tfboard:
         from tensorboardX import SummaryWriter
-        logger = SummaryWriter("logs")
+        logger = SummaryWriter("logs_rpn_vgg16")
 
 
-    for epoch in range(start_epoch, cfg.epoch + 1):
+    # for epoch in range(start_epoch, cfg.epoch + 1):
+    for epoch in range(start_epoch, 15 + 1):
         # Setting to train mode
         rpn_vgg16.train()
         loss_temp = 0
@@ -155,14 +165,15 @@ def train(**kwargs):
             optimizer.zero_grad()
             loss.backward()
             if cfg.backend_model == "vgg16":
-              clip_gradient(rpn_vgg16, 10.)
+                clip_gradient(rpn_vgg16, 10.)
             optimizer.step()
 
             if step % disp_interval == 0:
                 end = time.time()
                 if step > 0:
-                  loss_temp /= (disp_interval + 1)
+                    loss_temp /= (disp_interval + 1)
 
+                # Since batch size is 1, mGPUS are not effective!
 
                 if mGPUs:
                     loss_rpn_cls = rpn_loss_cls.mean().item()
@@ -177,22 +188,22 @@ def train(**kwargs):
                 print("\t\t\trpn_cls: %.4f, rpn_box: %.4f" % (loss_rpn_cls, loss_rpn_box))
 
                 if cfg.use_tfboard:
-                  info = {
-                    'loss': loss_temp,
-                    'loss_rpn_cls': loss_rpn_cls,
-                    'loss_rpn_box': loss_rpn_box
-                  }
-                  logger.add_scalars("logs_s_{}/losses".format(session), info, (epoch - 1) * iters_per_epoch + step)
+                    info = {
+                        'loss': loss_temp,
+                        'loss_rpn_cls': loss_rpn_cls,
+                        'loss_rpn_box': loss_rpn_box
+                    }
+                logger.add_scalars("logs_s_{}/losses".format(session), info, (epoch - 1) * iters_per_epoch + step)
 
             loss_temp = 0
             start = time.time()
 
     save_name = os.path.join(output_dir, 'rpn_vgg16_{}_{}_{}.pth'.format(session, epoch, step))
     save_checkpoint({
-      'session': session,
-      'epoch': epoch + 1,
-      'model': rpn_vgg16.module.state_dict() if mGPUs else rpn_vgg16.state_dict(),
-      'optimizer': optimizer.state_dict(),
+        'session': session,
+        'epoch': epoch + 1,
+        'model': rpn_vgg16.module.state_dict() if mGPUs else rpn_vgg16.state_dict(),
+        'optimizer': optimizer.state_dict(),
     }, save_name)
     print('save model: {}'.format(save_name))
 

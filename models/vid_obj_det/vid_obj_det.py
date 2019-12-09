@@ -97,12 +97,40 @@ class _VIDOBJDET(nn.Module):
 
 
         # Making Tube
-        tube_pooled_feat, tube_rois_label = make_tube_ff_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-        tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-        tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
-        tube_pooled_feat, tube_rois_label = make_tube_bf_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
-        tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-        tube_pooled_feat, tube_rois_label = make_tube_bf_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+        count = -1
+        while count < 5:
+            print('\n-------------------------------\n')
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_ff_ov_feat time: {time.time() - start_time:.2f}s')
+
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_bf_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_bf_ov_feat time: {time.time() - start_time:.2f}s')
+
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_ff_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_ff_feat time: {time.time() - start_time:.2f}s')
+
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_bf_feat time: {time.time() - start_time:.2f}s')
+
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_ff_ov time: {time.time() - start_time:.2f}s')
+
+            start_time = time.time()
+            tube_pooled_feat, tube_rois_label = make_tube_bf_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+            torch.cuda.synchronize()
+            print(f'make_tube_bf_ov time: {time.time() - start_time:.2f}s')
+
+            count += 1
         exit(0)
 
 

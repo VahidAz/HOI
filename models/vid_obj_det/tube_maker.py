@@ -14,12 +14,13 @@ from models.rpn.bbox_transform import bbox_overlaps_batch
 DEBUG = True
 
 
+#@torch.jit.script
 def make_tube_ff_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     Feature dist frame by frame
     '''
-    pooled_feat_view = pooled_feat.view(rois.shape[0], rois.shape[1], pooled_feat.shape[1])
-    rois_label_view = rois_label.view(rois.shape[0], rois.shape[1])
+    pooled_feat_view = pooled_feat.view(rois.shape[0], rois.shape[1], pooled_feat.shape[1]).cuda()
+    rois_label_view = rois_label.view(rois.shape[0], rois.shape[1]).cuda()
 
     final_max_val = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.float32).cuda()
     final_max_idx = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.int32).cuda()
@@ -89,6 +90,7 @@ def make_tube_ff_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshol
     return tube_pooled_feat, tube_rois_label
 
 
+#@torch.jit.script
 def make_tube_bf_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     Feature dist only with base rois
@@ -164,6 +166,7 @@ def make_tube_bf_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshol
     return tube_pooled_feat, tube_rois_label
 
 
+#@torch.jit.script
 def make_tube_ff_ov(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     Overlap frame by frame
@@ -239,6 +242,7 @@ def make_tube_ff_ov(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=
     return tube_pooled_feat, tube_rois_label
 
 
+#@torch.jit.script
 def make_tube_bf_ov(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     Overlap only with base rois
@@ -314,6 +318,7 @@ def make_tube_bf_ov(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=
     return tube_pooled_feat, tube_rois_label
 
 
+#@torch.jit.script
 def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     this function makes tube by integrating overlap and cdist
@@ -425,13 +430,14 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_thres
     return tube_pooled_feat, tube_rois_label
 
 
+#@torch.jit.script
 def make_tube_bf_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, tube_threshold=0.7):
     '''
     this function makes tube by integrating overlap and cdist
     the tracking happens base to frames
     '''
-    pooled_feat_view = pooled_feat.view(rois.shape[0], rois.shape[1], pooled_feat.shape[1])
-    rois_label_view = rois_label.view(rois.shape[0], rois.shape[1])
+    pooled_feat_view = pooled_feat.view(rois.shape[0], rois.shape[1], pooled_feat.shape[1]).cuda()
+    rois_label_view = rois_label.view(rois.shape[0], rois.shape[1]).cuda()
 
     final_max_val = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.float32).cuda()
     final_max_idx = torch.zeros([rois.shape[0] - 1, rois.shape[1]], dtype=torch.int32).cuda()

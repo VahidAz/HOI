@@ -16,6 +16,7 @@ def totensor(data, cuda=True):
         tensor = data.detach()
     if cuda:
         tensor = tensor.cuda()
+
     return tensor
 
 

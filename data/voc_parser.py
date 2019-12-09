@@ -76,6 +76,7 @@ class VOCPARSER:
         # cv.imwrite('ge_voc_parser.jpg', img_)
         ###>>>
 
+        # TODO: Fix below code
         # if self.return_difficult:
             # return img, bbox, label, difficult
 

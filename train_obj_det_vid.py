@@ -27,6 +27,9 @@ from models.libs.utils.net_utils import weights_normal_init, save_net, load_net,
       adjust_learning_rate, save_checkpoint, clip_gradient
 
 
+torch.backends.cudnn.benchmark = True
+
+
 def train(**kwargs):
     cfg._parse(kwargs)
 

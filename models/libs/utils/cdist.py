@@ -3,6 +3,9 @@ import torch
 import pdb
 
 
+# INFO: scripting doesn't work in Ver 0.4
+
+
 #@torch.jit.script
 def cdist_v1(x1, x2):
     x1_norm = x1.pow(2).sum(dim=-1, keepdim=True)
@@ -10,6 +13,7 @@ def cdist_v1(x1, x2):
     res = torch.addmm(x2_norm.transpose(-2, -1), x1, x2.transpose(-2, -1), alpha=-2).add_(x1_norm)
     #res = res.clamp_min_(1e-30).sqrt_()
     res = res.clamp(min=1e-30).sqrt_()
+
     return res
 
 
@@ -34,5 +38,6 @@ def cdist_v2(x1, x2):
 
     normalized_res = (res-torch.min(res))/(torch.max(res)-torch.min(res))
     reverse_norm_res = 1 - normalized_res
+    
     # return res
     return normalized_res, reverse_norm_res

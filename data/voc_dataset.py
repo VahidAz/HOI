@@ -128,7 +128,7 @@ class Dataset:
 
         img, bbox, label, o_H, o_W, scale = self.tsf((img, bbox, label))
 
-        tmp_im_info = np.zeros(shape=(1,3))
+        tmp_im_info = np.zeros(shape=(1, 3))
         tmp_im_info[0][0] = o_H
         tmp_im_info[0][1] = o_W
         tmp_im_info[0][2] = scale

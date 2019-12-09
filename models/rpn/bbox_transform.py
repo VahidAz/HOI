@@ -133,6 +133,7 @@ def clip_boxes(boxes, im_shape, batch_size):
     return boxes
 
 
+#@torch.jit.script
 def bbox_overlaps(anchors, gt_boxes):
     """
     anchors: (N, 4) ndarray of float
@@ -165,6 +166,7 @@ def bbox_overlaps(anchors, gt_boxes):
 
     return overlaps
 
+#@torch.jit.script
 def bbox_overlaps_batch(anchors, gt_boxes):
     """
     anchors: (N, 4) ndarray of float

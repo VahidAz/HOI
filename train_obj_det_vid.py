@@ -74,6 +74,11 @@ def train(**kwargs):
 
     # Train dataset loader
     train_dataset = Dataset(cfg)
+
+    # TODO: Now we support only batch size 1
+    #       because for tube making we need to have all images
+    #       from one sample in one GPU
+
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=1, shuffle=True, num_workers=2)
     print('Len Train Data: ', len(train_dataloader))
@@ -82,7 +87,7 @@ def train(**kwargs):
 
     if cfg.backend_model == 'vgg16':
         vid_vgg16 = VID_OBJ_DET_VGG16(cfg, _n_classes=train_dataset.num_classes(), _class_agnostic=False)
-    vid_vgg16 = vid_vgg16.cuda()
+        vid_vgg16 = vid_vgg16.cuda()
     vid_vgg16.create_architecture()
 
 
@@ -114,6 +119,8 @@ def train(**kwargs):
         rpn_vgg16.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         lr = optimizer.param_groups[0]['lr']
+        if 'pooling_mode' in checkpoint.keys():
+            cfg.POOLING_MODE = checkpoint['pooling_mode']
         print("loaded checkpoint %s" % (load_name))
 
 
@@ -123,10 +130,10 @@ def train(**kwargs):
 
     if cfg.use_tfboard:
         from tensorboardX import SummaryWriter
-        logger = SummaryWriter("logs")
+        logger = SummaryWriter("logs_vid_vgg16")
 
 
-    for epoch in range(start_epoch, cfg.epoch + 1):
+    for epoch in range(start_epoch, 20 + 1): #cfg.epoch + 1):
         # Setting to train mode
         vid_vgg16.train()
         loss_temp = 0
@@ -168,6 +175,8 @@ def train(**kwargs):
             rpn_loss_cls, rpn_loss_box, \
             vid_vgg16_loss_cls, vid_vgg16_loss_bbox, \
             rois_label = vid_vgg16(img, im_info, bbox, num_bbox)
+
+            # ##### DO FAR CHECKED
 
             loss = rpn_loss_cls.mean() + rpn_loss_box.mean() \
                 + vid_vgg16_loss_cls.mean() + vid_vgg16_loss_bbox.mean()

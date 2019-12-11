@@ -43,7 +43,7 @@ class _VIDOBJDET(nn.Module):
         self.grid_size = self.cfg.POOLING_SIZE * 2 if self.cfg.CROP_RESIZE_WITH_MAX_POOL else self.cfg.POOLING_SIZE
         self._VIDOBJDET_roi_crop = _RoICrop()
 
-        self.tube_threshold = 1.0
+        # self.tube_threshold = 1.0
 
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
@@ -97,41 +97,45 @@ class _VIDOBJDET(nn.Module):
 
 
         # Making Tube
-        count = -1
-        while count < 5:
-            print('\n-------------------------------\n')
+        if self.training: # Tube in training mode
+            # count = -1
+            # while count < 5:
+                # print('\n-------------------------------\n')
+                # start_time = time.time()
+                # tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+                # torch.cuda.synchronize()
+                # print(f'make_tube_ff_ov_feat time: {time.time() - start_time:.2f}s')
+
+                # start_time = time.time()
+                # tube_pooled_feat, tube_rois_label = make_tube_bf_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+                # torch.cuda.synchronize()
+                # print(f'make_tube_bf_ov_feat time: {time.time() - start_time:.2f}s')
+
+                # start_time = time.time()
+                # tube_pooled_feat, tube_rois_label = make_tube_ff_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+                # torch.cuda.synchronize()
+                # print(f'make_tube_ff_feat time: {time.time() - start_time:.2f}s')
+
+                # start_time = time.time()
+                # tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+                # torch.cuda.synchronize()
+                # print(f'make_tube_bf_feat time: {time.time() - start_time:.2f}s')
+
+                # start_time = time.time()
+                # tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
+                # torch.cuda.synchronize()
+                # print(f'make_tube_ff_ov time: {time.time() - start_time:.2f}s')
+
             start_time = time.time()
             tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
             torch.cuda.synchronize()
-            print(f'make_tube_ff_ov_feat time: {time.time() - start_time:.2f}s')
-
-            start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_bf_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-            torch.cuda.synchronize()
-            print(f'make_tube_bf_ov_feat time: {time.time() - start_time:.2f}s')
-
-            start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_ff_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-            torch.cuda.synchronize()
-            print(f'make_tube_ff_feat time: {time.time() - start_time:.2f}s')
-
-            start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_bf_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
-            torch.cuda.synchronize()
-            print(f'make_tube_bf_feat time: {time.time() - start_time:.2f}s')
-
-            start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_ff_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
-            torch.cuda.synchronize()
-            print(f'make_tube_ff_ov time: {time.time() - start_time:.2f}s')
-
-            start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_bf_ov(pooled_feat, rois_label, rois, self.cfg, im_data)
-            torch.cuda.synchronize()
             print(f'make_tube_bf_ov time: {time.time() - start_time:.2f}s')
 
-            count += 1
-        exit(0)
+                # count += 1
+            exit(0)
+        else: # Tube in eval mode
+            # Making tube in eval mode is different and we have only rois and features
+            pass
 
 
         # Compute bbox offset

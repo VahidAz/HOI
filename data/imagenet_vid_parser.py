@@ -9,7 +9,7 @@ import pdb
 import cv2 as cv
 from random import sample 
 
-from util import read_image
+from data.util import read_image
 
 
 class IMGNETVIDPARSER:
@@ -19,7 +19,7 @@ class IMGNETVIDPARSER:
         self.split = _split
         self.class_num = _class_num
         self.tw = _time_win
-        
+
         # Please note that some of images only
         # have one bounding box which is occluded
         # it is handled in this version, we ignore
@@ -29,13 +29,13 @@ class IMGNETVIDPARSER:
         self.ids = []
         self.label_names = IMGNET_VID_BBOX_LABEL_NAMES
 
-        max_each_class = 1000
+        max_folder_class = 50 # Max folder num for each class
+        max_each_class = 1500 # Max sample num for each class
 
         # For debugging
         total_ids_num = 0
 
-        for ii in range(self.class_num):
-            ii += 1
+        for ii in range(1, self.class_num + 1):
             print('ii: ', ii)
             
             id_file = os.path.join(
@@ -47,13 +47,18 @@ class IMGNETVIDPARSER:
             # print('cur_ids: ', cur_ids)
             print('Len cur ids: ', len(cur_ids))
 
-            cur_lbl = ii
-            print('lbl: ', cur_lbl)
+            max_folder_class = int(len(cur_ids) / 4)
+            print('Max folder num: ', max_folder_class)
 
-            pdb.set_trace()
+            if len(cur_ids) > max_folder_class:
+                cur_ids = random.sample(cur_ids, max_folder_class)
+                print('Len cur ids after sampling: ', len(cur_ids))
 
             max_each_set = round(max_each_class/len(cur_ids))
             print('Max each set: ', max_each_set)
+
+            cur_lbl = ii
+            print('lbl: ', cur_lbl)
 
             # all_num_data = []
 
@@ -95,13 +100,10 @@ class IMGNETVIDPARSER:
                     self.ids.extend(all_ids_cur_id)
                     total_ids_num += int(num_imgs/self.tw)
 
-
-                print('Len all ids: ', len(self.ids))
-                print('Total ids num: ', total_ids_num)
+                print('Len all ids so far: ', len(self.ids))
+                print('Total ids nu so far: ', total_ids_num)
 
             # print('Min num in this class: ', np.min(np.asarray(all_num_data)))
-            pdb.set_trace()
-
 
         if len(self.ids) != total_ids_num:
             print('ID len is not correct!')
@@ -123,6 +125,7 @@ class IMGNETVIDPARSER:
         bbox_list = list()
         label_list =list()
         occluded_list = list()
+
         # Flag, True if a set is not proper for training
         corrupted = 0
 
@@ -197,6 +200,13 @@ class IMGNETVIDPARSER:
             print(min(bbox_list, key=len))
             print('WARNING, this id is corrupted!')
             corrupted = 1 # True
+
+        fisrt_lbl = label_list[0]
+        for i in range(1, len(label_list)):
+            sec_lbl = label_list[i]
+            if fisrt_lbl != sec_lbl:
+                corrupted = 1
+                break
 
         img_np = np.stack(img_list).astype(np.float32)
         bbox_np = np.stack(bbox_list).astype(np.float32)
@@ -290,6 +300,6 @@ IMGNET_VID_BBOX_LABEL_NAMES = (
 
 
 if __name__ == '__main__':
-   test_obj = IMGNETVIDPARSER('../datasets/ILSVRC2015/')
+   test_obj = IMGNETVIDPARSER('../datasets/ILSVRC2015/', _class_num=3)
    examp = test_obj.get_example(0)
    pdb.set_trace()

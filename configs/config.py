@@ -105,13 +105,13 @@ class Config(object):
     TRAIN_BBOX_NORMALIZE_TARGETS_PRECOMPUTED = True
 
     POOLING_SIZE = 7
-    CROP_RESIZE_WITH_MAX_POOL = True
+    CROP_RESIZE_WITH_MAX_POOL = False #True
 
     TRAIN_BATCH_SIZE = 128
     TRAIN_FG_FRACTION = 0.25
     TRAIN_FG_THRESH = 0.5
     TRAIN_BG_THRESH_HI = 0.5
-    TRAIN_BG_THRESH_LO = 0.1
+    TRAIN_BG_THRESH_LO = 0.0 #0.1
 
     USE_GPU_NMS = True
 
@@ -128,7 +128,7 @@ class Config(object):
     TEST_RPN_MIN_SIZE = 16
 
 
-    POOLING_MODE  = 'align'
+    POOLING_MODE = 'align'
 
     # Make tensorboard logs
     use_tfboard = True

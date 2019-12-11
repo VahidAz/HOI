@@ -107,20 +107,21 @@ class Transform(object):
         bbox = util.resize_bbox(bbox, (H, W), (o_H, o_W), scale)
 
         # Horizontally flip
-        # img, params = util.random_flip(img, x_random=False, 
-        #     return_param=True)
-        # bbox = util.flip_bbox(bbox, (o_H, o_W), 
-        #     x_flip=params['x_flip'])
+        img, params = util.random_flip(img, x_random=True, 
+            return_param=True)
+        bbox = util.flip_bbox(bbox, (o_H, o_W), 
+            x_flip=params['x_flip'])
 
         return img, bbox, label, o_H, o_W, scale
 
 
+# TODO : Find a better way for implementing this Dataset
 class Dataset:
     def __init__(self, _cfg):
         self.cfg = _cfg
         self.db = IMGNETVIDPARSER(
             _data_dir=self.cfg.imgnet_vid_dataset_train, 
-            _split='train', _time_win=self.cfg.time_win, _class_num=30)
+            _split='train', _time_win=self.cfg.time_win, _class_num=3) #30)
         self.tsf = Transform(self.cfg.min_size, self.cfg.max_size, 
             self.cfg.pretrained, self.cfg.pretrained_caffe)
 

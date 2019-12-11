@@ -26,6 +26,9 @@ from models.libs.utils.net_utils import weights_normal_init, save_net, load_net,
       adjust_learning_rate, save_checkpoint, clip_gradient
 
 
+torch.backends.cudnn.benchmark = True
+
+
 def test(**kwargs):
     cfg._parse(kwargs)
 
@@ -58,7 +61,7 @@ def test(**kwargs):
     session = 1
     resume = True # Resume checkpoint or not
     checksession = 1 # Checksession to load model
-    checkepoch = 1 # Checkepoch to load model
+    checkepoch = 15 # Checkepoch to load model
     checkpoint = 11539 # Checkpoint to load model
 
 
@@ -78,21 +81,18 @@ def test(**kwargs):
 
     if cfg.backend_model == 'vgg16':
         rpn_vgg16 = RPN_VGG16(cfg)
-    rpn_vgg16 = rpn_vgg16.cuda()
+        rpn_vgg16 = rpn_vgg16.cuda()
     rpn_vgg16.create_architecture()
 
 
-    # if resume:
-    if True: # It should be true since it is in test
-        load_name = os.path.join(output_dir,
-          'rpn_vgg16_{}_{}_{}.pth'.format(
-            checksession, checkepoch, checkpoint))
-        print("loading checkpoint %s" % (load_name))
-        checkpoint = torch.load(load_name)
-        session = checkpoint['session']
-        start_epoch = checkpoint['epoch']
-        rpn_vgg16.load_state_dict(checkpoint['model'])
-        print("loaded checkpoint %s" % (load_name))
+    load_name = os.path.join(output_dir,
+      'rpn_vgg16_{}_{}_{}.pth'.format(
+        checksession, checkepoch, checkpoint))
+    print("loading checkpoint %s" % (load_name))
+
+    checkpoint = torch.load(load_name)
+    rpn_vgg16.load_state_dict(checkpoint['model'])
+    print("loaded checkpoint %s" % (load_name))
 
 
     rpn_vgg16.eval()
@@ -114,12 +114,13 @@ def test(**kwargs):
         img = inverse_normalize(img).copy()
 
         bbox = at.tonumpy(rois[0])
-        for bb in bbox:
+        for ind, bb in enumerate(bbox):
+            print(ind, '\t', bb)
             bb = bb[1:]
             img_ = img.copy()
             cv.rectangle(img_, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])), (0, 0, 255), 3)
 
-            cv.imwrite('img_in_train_loop.jpg', img_)
+            cv.imwrite('img_in_eval_loop.jpg', img_)
 
             pdb.set_trace()
 

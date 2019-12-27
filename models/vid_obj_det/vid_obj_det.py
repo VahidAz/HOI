@@ -99,11 +99,10 @@ class _VIDOBJDET(nn.Module):
         # Making Tube
         if self.training: # Tube in training mode
             start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data)
+            tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data, rois_target, rois_inside_ws, rois_outside_ws)
             torch.cuda.synchronize()
             print('make_tube_bf_ov time: {time.time() - start_time:.2f}s')
 
-            exit(0)
         else: # Tube in eval mode
             # Making tube in eval mode is different and we have only rois and features
             pass

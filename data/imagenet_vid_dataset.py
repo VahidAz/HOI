@@ -107,7 +107,7 @@ class Transform(object):
         bbox = util.resize_bbox(bbox, (H, W), (o_H, o_W), scale)
 
         # Horizontally flip
-        img, params = util.random_flip(img, x_random=True, 
+        img, params = util.random_flip(img, x_random=False, 
             return_param=True)
         bbox = util.flip_bbox(bbox, (o_H, o_W), 
             x_flip=params['x_flip'])

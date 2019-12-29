@@ -15,7 +15,7 @@ from models.vid_obj_det.vid_obj_det import _VIDOBJDET
 
 
 class VID_OBJ_DET_VGG16(_VIDOBJDET):
-    def __init__(self, _cfg, _n_classes, _class_agnostic=False):
+    def __init__(self, _cfg, _n_classes, _class_agnostic=True):
         self.cfg = _cfg
         self.n_classes = _n_classes
         self.class_agnostic = _class_agnostic
@@ -54,7 +54,7 @@ class VID_OBJ_DET_VGG16(_VIDOBJDET):
         self._VIDOBJDET_cls_score = nn.Linear(4096, self.n_classes).cuda()
 
         if self.class_agnostic:
-            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4).cuda()
+            self._VIDOBJDET_bbox_pred = nn.Linear(4096, 20).cuda()
         else:
             self._VIDOBJDET_bbox_pred = nn.Linear(4096, 4 * self.n_classes).cuda()   
 

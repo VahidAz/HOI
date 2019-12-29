@@ -37,6 +37,9 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
     pooled_feat_view = pooled_feat.view(batch_size, num_rois, feat_dim)
     rois_label_view = rois_label.view(batch_size, num_rois)
 
+    rois_target_view = rois_target.view(batch_size, num_rois, rois_target.shape[1])
+    rois_inside_ws_view = rois_inside_ws.view(batch_size, num_rois, rois_inside_ws.shape[1])
+    rois_outside_ws_view = rois_outside_ws.view(batch_size, num_rois, rois_outside_ws.shape[1])
 
     ov_max_val = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.float32).cuda()
     ov_max_idx = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.int32).cuda()
@@ -69,6 +72,9 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
     # Making pooled_feat for tube
     tube_pooled_feat = torch.zeros(batch_size * num_rois, feat_dim, dtype=torch.float32).cuda()
     tube_rois_label = torch.zeros(batch_size * num_rois, dtype=torch.float32).cuda()
+    tube_rois_target = torch.zeros(batch_size * num_rois, rois_target.shape[1] * batch_size).cuda()
+    tube_rois_inside_ws = torch.zeros(batch_size * num_rois, rois_inside_ws.shape[1] * batch_size).cuda()
+    tube_rois_outside_ws = torch.zeros(batch_size * num_rois, rois_outside_ws.shape[1] * batch_size).cuda()
 
     count_tube = 0
     ov_threshold = 0.5
@@ -120,6 +126,20 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
 
             tube_pooled_feat[count_tube][:] = tmp_feat
             tube_rois_label[count_tube] = ref_lbl
+
+            tmp_target = torch.zeros(batch_size * rois_target.shape[1]).cuda()
+            tmp_inside = torch.zeros(batch_size * rois_inside_ws.shape[1]).cuda()
+            tmp_outside = torch.zeros(batch_size * rois_outside_ws.shape[1]).cuda()
+            for count, idx in enumerate(tmp_idx_list):
+                tmp_target[count * rois_target.shape[1]: count * rois_target.shape[1] + rois_target.shape[1]] = rois_target_view[count][idx]
+                tmp_inside[count * rois_inside_ws.shape[1]: count * rois_inside_ws.shape[1] + rois_inside_ws.shape[1]] = rois_inside_ws_view[count][idx]
+                tmp_outside[count * rois_outside_ws.shape[1]: count * rois_outside_ws.shape[1] + rois_outside_ws.shape[1]] = rois_outside_ws_view[count][idx]
+
+            tube_rois_target[count_tube] = tmp_target
+            tube_rois_inside_ws[count_tube] = tmp_inside
+            tube_rois_outside_ws[count_tube] = tmp_outside
+
+
             count_tube += 1
 
             # Debugging
@@ -138,13 +158,13 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
                     cv.imwrite('make_tube_ff_ov_feat_' + str(ii) + '_' + str(count) + '.jpg', img)
 
 
-    print('\n STOP \n')
-    pdb.set_trace()
-
     # TODO: Check it causes problem to give many zeros!
     # Uncommenting this causes problem because of batch size
 
-    # tube_pooled_feat = tube_pooled_feat[:count_tube]
-    # tube_rois_label = tube_rois_label[:count_tube]
+    tube_pooled_feat = tube_pooled_feat[:count_tube]
+    tube_rois_label = tube_rois_label[:count_tube]
+    tube_rois_target = tube_rois_target[:count_tube]
+    tube_rois_inside_ws = tube_rois_inside_ws[:count_tube]
+    tube_rois_outside_ws = tube_rois_outside_ws[:count_tube]
 
-    return tube_pooled_feat, tube_rois_label
+    return tube_pooled_feat, tube_rois_label, tube_rois_target, tube_rois_inside_ws, tube_rois_outside_ws

@@ -47,6 +47,7 @@ class _VIDOBJDET(nn.Module):
 
 
     def forward(self, im_data, im_info, gt_boxes, num_boxes):
+        # print('\n Forward \n')
         batch_size = im_data.size(0)
 
         im_info = im_info.data
@@ -99,23 +100,34 @@ class _VIDOBJDET(nn.Module):
         # Making Tube
         if self.training: # Tube in training mode
             start_time = time.time()
-            tube_pooled_feat, tube_rois_label = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data, rois_target, rois_inside_ws, rois_outside_ws)
-            torch.cuda.synchronize()
-            print('make_tube_bf_ov time: {time.time() - start_time:.2f}s')
+            tube_pooled_feat, tube_rois_label, tube_rois_target, tube_rois_inside_ws, tube_rois_outside_ws = make_tube_ff_ov_feat(pooled_feat, rois_label, rois, self.cfg, im_data, rois_target, rois_inside_ws, rois_outside_ws)
+            # torch.cuda.synchronize()
+            print('make_tube_bf_ov time:', time.time() - start_time)
+            # print(tube_pooled_feat.shape)
 
-        else: # Tube in eval mode
+            if tube_pooled_feat.shape[0] == 0:
+                return 0, 0, 0, 0, 0, 0, -1
+
+        # else: # Tube in eval mode
             # Making tube in eval mode is different and we have only rois and features
-            pass
+            # pass
 
 
         # Compute bbox offset
         bbox_pred = self._VIDOBJDET_bbox_pred(tube_pooled_feat)
+        print(bbox_pred)
 
-        if self.training and not self.class_agnostic:
-            # select the corresponding columns according to roi labels
-            bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 4), 4)
-            bbox_pred_select = torch.gather(bbox_pred_view, 1, rois_label.view(rois_label.size(0), 1, 1).expand(rois_label.size(0), 1, 4))
-            bbox_pred = bbox_pred_select.squeeze(1)
+
+
+        # if self.training and not self.class_agnostic:
+            # # select the corresponding columns according to roi labels
+            # bbox_pred_view = bbox_pred.view(bbox_pred.size(0), int(bbox_pred.size(1) / 20), 20)
+            # # bbox_pred_select = torch.gather(bbox_pred_view, 1, tube_rois_label.view(tube_rois_label.size(0), 1, 1).expand(tube_rois_label.size(0), 1, 20))
+            # # bbox_pred = bbox_pred_select.squeeze(1)
+
+            # print('\nMMMMMMMMMMMMMMMMMMMMMMMM')
+            # pdb.set_trace()
+
 
         # compute object classification probability
         cls_score = self._VIDOBJDET_cls_score(tube_pooled_feat)
@@ -124,21 +136,34 @@ class _VIDOBJDET(nn.Module):
         _VIDOBJDET_loss_cls = 0
         _VIDOBJDET_loss_bbox = 0
 
+
+        # print('\no0o0o0o0o0\n')
         if self.training:
             # classification loss
             _VIDOBJDET_loss_cls = F.cross_entropy(cls_score, tube_rois_label.long())
 
             # bounding box regression L1 loss
-            _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred, rois_target, rois_inside_ws, rois_outside_ws)
+            # print('[][][][][][][][[')
+            # print(bbox_pred.shape)
+            _VIDOBJDET_loss_bbox = _smooth_l1_loss(bbox_pred.view(bbox_pred.shape[0] * batch_size, int(bbox_pred.shape[1]/batch_size)).clone(),
+                                                tube_rois_target.view(tube_rois_target.shape[0] * batch_size, int(tube_rois_target.shape[1]/batch_size)).clone(), 
+                                                tube_rois_inside_ws.view(tube_rois_inside_ws.shape[0] * batch_size, int(tube_rois_inside_ws.shape[1]/batch_size)).clone(),
+                                                tube_rois_outside_ws.view(tube_rois_outside_ws.shape[0] * batch_size, int(tube_rois_outside_ws.shape[1]/batch_size)).clone())
 
 
+        # print('UUUUUU')
+        # print(rpn_loss_cls)
+        # print(rpn_loss_bbox)
+        # print(_VIDOBJDET_loss_cls)
+        # print(_VIDOBJDET_loss_bbox)
+        # pdb.set_trace()
         # TODO: doreally need this!
 
         # cls_prob = cls_prob.view(batch_size, rois.size(1), -1)
         # bbox_pred = bbox_pred.view(batch_size, rois.size(1), -1)
 
-
-        return rois, cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, _VIDOBJDET_loss_cls, _VIDOBJDET_loss_bbox, rois_label
+        # add rois to return
+        return cls_prob, bbox_pred, rpn_loss_cls, rpn_loss_bbox, _VIDOBJDET_loss_cls, _VIDOBJDET_loss_bbox, tube_rois_label
 
 
     def _init_weights(self):

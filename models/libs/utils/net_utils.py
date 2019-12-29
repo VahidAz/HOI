@@ -9,6 +9,9 @@ from models.libs.roi_crop.functions.roi_crop import RoICropFunction
 import cv2
 import pdb
 import random
+import sys
+
+from models.libs.utils import array_tool as at
 
 def save_net(fname, net):
     import h5py
@@ -71,17 +74,55 @@ def save_checkpoint(state, filename):
 
 def _smooth_l1_loss(bbox_pred, bbox_targets, bbox_inside_weights, bbox_outside_weights, sigma=1.0, dim=[1]):
     
+    # bbox_pred = at.tonumpy(bbox_pred)
+    # bbox_targets = at.tonumpy(bbox_targets)
+    # bbox_inside_weights = at.tonumpy(bbox_inside_weights)
+    # bbox_outside_weights = at.tonumpy(bbox_outside_weights)
+
+    # print('\nloss')
+    # print(sys._getframe().f_back.f_code.co_name)
+    # print(bbox_pred.shape)
+    # print(bbox_pred)
+    # print(bbox_targets.shape)
+    # print(bbox_inside_weights.shape)
+    # print(bbox_outside_weights.shape)
+    # if bbox_pred.shape[0] == 5:
+    #     print('LOSS')
+    #     return
+
     sigma_2 = sigma ** 2
+    # print(sigma_2)
+
+    # print(at.tonumpy(bbox_pred))
+    # print(at.tonumpy(bbox_targets))
+    # print(bbox_pred)
+    # print(bbox_targets)
     box_diff = bbox_pred - bbox_targets
+    # print(box_diff)
+
     in_box_diff = bbox_inside_weights * box_diff
+    # print(in_box_diff)
+
     abs_in_box_diff = torch.abs(in_box_diff)
+    # print(abs_in_box_diff)
+
     smoothL1_sign = (abs_in_box_diff < 1. / sigma_2).detach().float()
+    # print(smoothL1_sign)
+
     in_loss_box = torch.pow(in_box_diff, 2) * (sigma_2 / 2.) * smoothL1_sign \
                   + (abs_in_box_diff - (0.5 / sigma_2)) * (1. - smoothL1_sign)
+    # print(in_loss_box)
+
     out_loss_box = bbox_outside_weights * in_loss_box
+    # print(out_loss_box)
+
     loss_box = out_loss_box
+    # print(loss_box)
+
     for i in sorted(dim, reverse=True):
       loss_box = loss_box.sum(i)
+    # print(loss_box)
+    # print(loss_box.mean())
     loss_box = loss_box.mean()
     return loss_box
 

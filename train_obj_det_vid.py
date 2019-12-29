@@ -80,13 +80,13 @@ def train(**kwargs):
     #       from one sample in one GPU
 
     train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=1, shuffle=True, num_workers=2)
+        train_dataset, batch_size=1, shuffle=True, num_workers=1)
     print('Len Train Data: ', len(train_dataloader))
     iters_per_epoch = len(train_dataloader) / cfg.batch_size
 
 
     if cfg.backend_model == 'vgg16':
-        vid_vgg16 = VID_OBJ_DET_VGG16(cfg, _n_classes=train_dataset.num_classes(), _class_agnostic=False)
+        vid_vgg16 = VID_OBJ_DET_VGG16(cfg, _n_classes=train_dataset.num_classes(), _class_agnostic=True)
         vid_vgg16 = vid_vgg16.cuda()
     vid_vgg16.create_architecture()
 
@@ -150,6 +150,7 @@ def train(**kwargs):
                 print('\n\n CORRUPTED \n\n')
                 continue
 
+
             # CUDA
             img = img.view(img.shape[1], img.shape[2], img.shape[3], img.shape[4])
             img = img.cuda()
@@ -171,11 +172,17 @@ def train(**kwargs):
 
 
             vid_vgg16.zero_grad()
-            rois, cls_prob, bbox_pred, \
+            cls_prob, bbox_pred, \
             rpn_loss_cls, rpn_loss_box, \
             vid_vgg16_loss_cls, vid_vgg16_loss_bbox, \
             rois_label = vid_vgg16(img, im_info, bbox, num_bbox)
 
+            # print(rpn_loss_cls)
+            # print(rpn_loss_box)
+            # print(vid_vgg16_loss_cls)
+            # print(vid_vgg16_loss_bbox)
+            if rpn_loss_cls == 0.0:
+                continue
             # ##### DO FAR CHECKED
 
             loss = rpn_loss_cls.mean() + rpn_loss_box.mean() \

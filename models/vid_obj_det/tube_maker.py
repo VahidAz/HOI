@@ -8,6 +8,12 @@ from data.imagenet_vid_dataset import inverse_normalize
 from models.libs.utils import array_tool as at
 from models.libs.utils.cdist import cdist_v2
 from models.rpn.bbox_transform import bbox_overlaps_batch, bbox_overlaps, bbox_iou
+from configs.config import cfg
+
+if torch.cuda.is_available() and cfg.cuda:
+    device = torch.device('cuda:0')
+else:
+    device = torch.device('cpu')
 
 
 # Debug flag
@@ -41,11 +47,11 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
     rois_inside_ws_view = rois_inside_ws.view(batch_size, num_rois, rois_inside_ws.shape[1])
     rois_outside_ws_view = rois_outside_ws.view(batch_size, num_rois, rois_outside_ws.shape[1])
 
-    ov_max_val = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.float32).cuda()
-    ov_max_idx = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.int32).cuda()
+    ov_max_val = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.float32).to(device)
+    ov_max_idx = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.int32).to(device)
 
-    # dist_max_val = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.float32).cuda()
-    # dist_max_idx = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.int32).cuda()
+    # dist_max_val = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.float32).to(device)
+    # dist_max_idx = torch.zeros([cfg.time_win - 1, num_rois], dtype=torch.int32).to(device)
 
 
     for ii in range(cfg.time_win - 1):
@@ -70,11 +76,11 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
 
 
     # Making pooled_feat for tube
-    tube_pooled_feat = torch.zeros(batch_size * num_rois, feat_dim, dtype=torch.float32).cuda()
-    tube_rois_label = torch.zeros(batch_size * num_rois, dtype=torch.float32).cuda()
-    tube_rois_target = torch.zeros(batch_size * num_rois, rois_target.shape[1] * batch_size).cuda()
-    tube_rois_inside_ws = torch.zeros(batch_size * num_rois, rois_inside_ws.shape[1] * batch_size).cuda()
-    tube_rois_outside_ws = torch.zeros(batch_size * num_rois, rois_outside_ws.shape[1] * batch_size).cuda()
+    tube_pooled_feat = torch.zeros(batch_size * num_rois, feat_dim, dtype=torch.float32).to(device)
+    tube_rois_label = torch.zeros(batch_size * num_rois, dtype=torch.float32).to(device)
+    tube_rois_target = torch.zeros(batch_size * num_rois, rois_target.shape[1] * batch_size).to(device)
+    tube_rois_inside_ws = torch.zeros(batch_size * num_rois, rois_inside_ws.shape[1] * batch_size).to(device)
+    tube_rois_outside_ws = torch.zeros(batch_size * num_rois, rois_outside_ws.shape[1] * batch_size).to(device)
 
     count_tube = 0
     ov_threshold = 0.5
@@ -127,9 +133,9 @@ def make_tube_ff_ov_feat(pooled_feat, rois_label, rois, cfg, im_data, rois_targe
             tube_pooled_feat[count_tube][:] = tmp_feat
             tube_rois_label[count_tube] = ref_lbl
 
-            tmp_target = torch.zeros(batch_size * rois_target.shape[1]).cuda()
-            tmp_inside = torch.zeros(batch_size * rois_inside_ws.shape[1]).cuda()
-            tmp_outside = torch.zeros(batch_size * rois_outside_ws.shape[1]).cuda()
+            tmp_target = torch.zeros(batch_size * rois_target.shape[1]).to(device)
+            tmp_inside = torch.zeros(batch_size * rois_inside_ws.shape[1]).to(device)
+            tmp_outside = torch.zeros(batch_size * rois_outside_ws.shape[1]).to(device)
             for count, idx in enumerate(tmp_idx_list):
                 tmp_target[count * rois_target.shape[1]: count * rois_target.shape[1] + rois_target.shape[1]] = rois_target_view[count][idx]
                 tmp_inside[count * rois_inside_ws.shape[1]: count * rois_inside_ws.shape[1] + rois_inside_ws.shape[1]] = rois_inside_ws_view[count][idx]

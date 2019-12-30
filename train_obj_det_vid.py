@@ -33,11 +33,11 @@ torch.backends.cudnn.benchmark = True
 def train(**kwargs):
     cfg._parse(kwargs)
 
-    if torch.cuda.is_available() and not cfg.cuda:
-        print('WARNING: You have a CUDA device, so you \
-                should probably run with --cuda=True')
-        print('ERROR: CUDA is the only supported device in this version.')
-        exit(0)
+    if torch.cuda.is_available() and cfg.cuda:
+        device = torch.device('cuda:0')
+    else:
+        device = torch.device('cpu')
+
 
     np.random.seed(cfg.RNG_SEED)
 
@@ -87,8 +87,8 @@ def train(**kwargs):
 
     if cfg.backend_model == 'vgg16':
         vid_vgg16 = VID_OBJ_DET_VGG16(cfg, _n_classes=train_dataset.num_classes(), _class_agnostic=True)
-        vid_vgg16 = vid_vgg16.cuda()
     vid_vgg16.create_architecture()
+    vid_vgg16 = vid_vgg16.to(device)
 
 
     params = []
@@ -125,7 +125,7 @@ def train(**kwargs):
 
 
     if mGPUs:
-        vid_vgg16 = nn.DataParallel(vid_vgg16).cuda()
+        vid_vgg16 = nn.DataParallel(vid_vgg16).to(device)
 
 
     if cfg.use_tfboard:
@@ -153,22 +153,19 @@ def train(**kwargs):
 
             # CUDA
             img = img.view(img.shape[1], img.shape[2], img.shape[3], img.shape[4])
-            img = img.cuda()
+            img = img.to(device)
 
             bbox = bbox.view(bbox.shape[1], bbox.shape[2], bbox.shape[3])
-            bbox = bbox.cuda()
+            bbox = bbox.to(device)
 
             lbls = lbls.view(lbls.shape[1], lbls.shape[2])
-            lbls = lbls.cuda()
+            lbls = lbls.to(device)
 
             im_info = im_info.view(im_info.shape[1], im_info.shape[2], im_info.shape[3])
-            im_info = im_info.view(-1, 3).cuda()
+            im_info = im_info.view(-1, 3).to(device)
 
             num_bbox = num_bbox.view(num_bbox.shape[1], num_bbox.shape[2])
-            num_bbox = num_bbox.cuda()
-
-
-            # pdb.set_trace()
+            num_bbox = num_bbox.to(device)
 
 
             vid_vgg16.zero_grad()
@@ -177,13 +174,10 @@ def train(**kwargs):
             vid_vgg16_loss_cls, vid_vgg16_loss_bbox, \
             rois_label = vid_vgg16(img, im_info, bbox, num_bbox)
 
-            # print(rpn_loss_cls)
-            # print(rpn_loss_box)
-            # print(vid_vgg16_loss_cls)
-            # print(vid_vgg16_loss_bbox)
-            if rpn_loss_cls == 0.0:
+
+            if rpn_loss_cls == 0.0 and rpn_loss_box == 0:
                 continue
-            # ##### DO FAR CHECKED
+
 
             loss = rpn_loss_cls.mean() + rpn_loss_box.mean() \
                 + vid_vgg16_loss_cls.mean() + vid_vgg16_loss_bbox.mean()

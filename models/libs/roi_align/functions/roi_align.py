@@ -41,10 +41,18 @@ class RoIAlignFunction(Function):
 
         grad_input = self.rois.new(batch_size, num_channels, data_height,
                                   data_width).zero_()
+
+        # dev = 'gpu'
+        # if dev == 'gpu':
         roi_align.roi_align_backward_cuda(self.aligned_height,
                                           self.aligned_width,
                                           self.spatial_scale, grad_output,
                                           self.rois, grad_input)
+        # else:
+        #     roi_align.roi_align_backward(self.aligned_height,
+        #                                   self.aligned_width,
+        #                                   self.spatial_scale, grad_output,
+        #                                   self.rois, grad_input)
 
         # print grad_input
 

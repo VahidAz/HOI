@@ -202,12 +202,19 @@ class IMGNETVIDPARSER:
             print('WARNING, this id is corrupted!')
             corrupted = 1 # True
 
-        fisrt_lbl = label_list[0]
-        for i in range(1, len(label_list)):
-            sec_lbl = label_list[i]
-            if fisrt_lbl != sec_lbl:
-                corrupted = 1
-                break
+        first_lbl = label_list[0]
+        if all(i <= self.class_num for i in first_lbl):
+  
+            for i in range(1, len(label_list)):
+                sec_lbl = label_list[i]
+                if any(i > self.class_num for i in sec_lbl):
+                    corrupted = 1
+                    break
+                if first_lbl != sec_lbl:
+                    corrupted = 1
+                    break
+        else:
+            corrupted = 1
 
         img_np = np.stack(img_list).astype(np.float32)
         bbox_np = np.stack(bbox_list).astype(np.float32)
